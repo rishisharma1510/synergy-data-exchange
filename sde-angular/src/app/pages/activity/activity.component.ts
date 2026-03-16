@@ -32,7 +32,7 @@ function getProgressPercentage(progress?: ExecutionProgress | null): number | nu
       : null);
   return typeof rawPct === 'number' && Number.isFinite(rawPct)
     ? Math.max(0, Math.min(100, Math.round(rawPct)))
-    : 3;
+    : null;
 }
 
 @Component({
@@ -439,14 +439,14 @@ export class JobRowComponent {
         @if (job.status === 'RUNNING') {
           <div class="space-y-1.5">
             <div class="flex items-center justify-between text-xs">
-              <span class="text-muted-foreground">{{ job.progress?.currentStep || job.progress?.message || 'Processing…' }}</span>
-              @if (calcProgress(job) !== null) {
-                <span class="font-medium tabular-nums">{{ calcProgress(job) }}%</span>
+              <span class="text-muted-foreground">{{ job.progress?.currentStep || job.progress?.message || job.progress?.status || 'Processing…' }}</span>
+              @if (calcProgress(job.progress) !== null) {
+                <span class="font-medium tabular-nums">{{ calcProgress(job.progress) }}%</span>
               }
             </div>
-            @if (calcProgress(job) !== null) {
+            @if (calcProgress(job.progress) !== null) {
               <div class="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
-                <div class="h-full rounded-full bg-primary transition-all" [style.width]="calcProgress(job) + '%'"></div>
+                <div class="h-full rounded-full bg-primary transition-all" [style.width]="calcProgress(job.progress) + '%'"></div>
               </div>
             } @else {
               <div class="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
@@ -455,6 +455,12 @@ export class JobRowComponent {
             }
             @if (job.progress?.totalSteps != null && job.progress?.completedSteps != null) {
               <p class="text-xs text-muted-foreground/70">Step {{ job.progress!.completedSteps }} of {{ job.progress!.totalSteps }}</p>
+            }
+            @if (job.progress?.details?.['tables_done'] != null && job.progress?.details?.['total_tables'] != null) {
+              <p class="text-xs text-muted-foreground/70">
+                Table {{ job.progress!.details!['tables_done'] }} of {{ job.progress!.details!['total_tables'] }}
+                @if (job.progress!.details!['current_table']) { — {{ job.progress!.details!['current_table'] }} }
+              </p>
             }
           </div>
         }

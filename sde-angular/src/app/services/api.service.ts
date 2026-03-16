@@ -15,6 +15,7 @@ export interface ExecutionFailure {
 export interface ExecutionProgress {
   percentage?: number;
   progress?: number;
+  status?: string;
   currentStep?: string;
   totalSteps?: number;
   completedSteps?: number;
