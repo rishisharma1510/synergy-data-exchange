@@ -1,0 +1,243 @@
+{
+  "rs_cdkdev_rubyx00001_exposure_db_tcontract": {
+    "source": {
+      "namespace": "rs_cdkdev_rubyx00001_exposure_db",
+      "table": "tcontract"
+    },
+    "target": {
+      "schema": "dbo",
+      "table": "tcontract"
+    },
+    "generated_at": "2026-02-20T14:57:39.038767+00:00",
+    "naming_convention": "as_is",
+    "create_table_if_missing": true,
+    "load_mode": "full",
+    "columns": [
+      {
+        "source": "contractsid",
+        "target": "contractsid",
+        "source_type": "int64",
+        "target_type": "BIGINT",
+        "strategy": "naming-convention",
+        "confidence": 1.0,
+        "include": true
+      },
+      {
+        "source": "exposuresetsid",
+        "target": "exposuresetsid",
+        "source_type": "int64",
+        "target_type": "BIGINT",
+        "strategy": "naming-convention",
+        "confidence": 1.0,
+        "include": true
+      },
+      {
+        "source": "contractid",
+        "target": "contractid",
+        "source_type": "large_string",
+        "target_type": "NVARCHAR(MAX)",
+        "strategy": "naming-convention",
+        "confidence": 1.0,
+        "include": true
+      },
+      {
+        "source": "contracttypecode",
+        "target": "contracttypecode",
+        "source_type": "large_string",
+        "target_type": "NVARCHAR(MAX)",
+        "strategy": "naming-convention",
+        "confidence": 1.0,
+        "include": true
+      },
+      {
+        "source": "submitstatuscode",
+        "target": "submitstatuscode",
+        "source_type": "large_string",
+        "target_type": "NVARCHAR(MAX)",
+        "strategy": "naming-convention",
+        "confidence": 1.0,
+        "include": true
+      },
+      {
+        "source": "perilsetcode",
+        "target": "perilsetcode",
+        "source_type": "int32",
+        "target_type": "INT",
+        "strategy": "naming-convention",
+        "confidence": 1.0,
+        "include": true
+      },
+      {
+        "source": "currencycode",
+        "target": "currencycode",
+        "source_type": "large_string",
+        "target_type": "NVARCHAR(MAX)",
+        "strategy": "naming-convention",
+        "confidence": 1.0,
+        "include": true
+      },
+      {
+        "source": "inceptiondate",
+        "target": "inceptiondate",
+        "source_type": "date32[day]",
+        "target_type": "DATE",
+        "strategy": "naming-convention",
+        "confidence": 1.0,
+        "include": true
+      },
+      {
+        "source": "expirationdate",
+        "target": "expirationdate",
+        "source_type": "date32[day]",
+        "target_type": "DATE",
+        "strategy": "naming-convention",
+        "confidence": 1.0,
+        "include": true
+      },
+      {
+        "source": "userlineofbusiness",
+        "target": "userlineofbusiness",
+        "source_type": "large_string",
+        "target_type": "NVARCHAR(MAX)",
+        "strategy": "naming-convention",
+        "confidence": 1.0,
+        "include": true
+      },
+      {
+        "source": "policyform",
+        "target": "policyform",
+        "source_type": "large_string",
+        "target_type": "NVARCHAR(MAX)",
+        "strategy": "naming-convention",
+        "confidence": 1.0,
+        "include": true
+      },
+      {
+        "source": "insuredname",
+        "target": "insuredname",
+        "source_type": "large_string",
+        "target_type": "NVARCHAR(MAX)",
+        "strategy": "naming-convention",
+        "confidence": 1.0,
+        "include": true
+      },
+      {
+        "source": "producername",
+        "target": "producername",
+        "source_type": "large_string",
+        "target_type": "NVARCHAR(MAX)",
+        "strategy": "naming-convention",
+        "confidence": 1.0,
+        "include": true
+      },
+      {
+        "source": "underwriter",
+        "target": "underwriter",
+        "source_type": "large_string",
+        "target_type": "NVARCHAR(MAX)",
+        "strategy": "naming-convention",
+        "confidence": 1.0,
+        "include": true
+      },
+      {
+        "source": "branch",
+        "target": "branch",
+        "source_type": "large_string",
+        "target_type": "NVARCHAR(MAX)",
+        "strategy": "naming-convention",
+        "confidence": 1.0,
+        "include": true
+      },
+      {
+        "source": "expiringcontractid",
+        "target": "expiringcontractid",
+        "source_type": "large_string",
+        "target_type": "NVARCHAR(MAX)",
+        "strategy": "naming-convention",
+        "confidence": 1.0,
+        "include": true
+      },
+      {
+        "source": "entereddate",
+        "target": "entereddate",
+        "source_type": "large_string",
+        "target_type": "NVARCHAR(MAX)",
+        "strategy": "naming-convention",
+        "confidence": 1.0,
+        "include": true
+      },
+      {
+        "source": "editeddate",
+        "target": "editeddate",
+        "source_type": "large_string",
+        "target_type": "NVARCHAR(MAX)",
+        "strategy": "naming-convention",
+        "confidence": 1.0,
+        "include": true
+      },
+      {
+        "source": "userdefined1",
+        "target": "userdefined1",
+        "source_type": "large_string",
+        "target_type": "NVARCHAR(MAX)",
+        "strategy": "naming-convention",
+        "confidence": 1.0,
+        "include": true
+      },
+      {
+        "source": "userdefined2",
+        "target": "userdefined2",
+        "source_type": "large_string",
+        "target_type": "NVARCHAR(MAX)",
+        "strategy": "naming-convention",
+        "confidence": 1.0,
+        "include": true
+      },
+      {
+        "source": "userdefined3",
+        "target": "userdefined3",
+        "source_type": "large_string",
+        "target_type": "NVARCHAR(MAX)",
+        "strategy": "naming-convention",
+        "confidence": 1.0,
+        "include": true
+      },
+      {
+        "source": "userdefined4",
+        "target": "userdefined4",
+        "source_type": "large_string",
+        "target_type": "NVARCHAR(MAX)",
+        "strategy": "naming-convention",
+        "confidence": 1.0,
+        "include": true
+      },
+      {
+        "source": "userdefined5",
+        "target": "userdefined5",
+        "source_type": "large_string",
+        "target_type": "NVARCHAR(MAX)",
+        "strategy": "naming-convention",
+        "confidence": 1.0,
+        "include": true
+      },
+      {
+        "source": "enteredby",
+        "target": "enteredby",
+        "source_type": "large_string",
+        "target_type": "NVARCHAR(MAX)",
+        "strategy": "naming-convention",
+        "confidence": 1.0,
+        "include": true
+      },
+      {
+        "source": "editedby",
+        "target": "editedby",
+        "source_type": "large_string",
+        "target_type": "NVARCHAR(MAX)",
+        "strategy": "naming-convention",
+        "confidence": 1.0,
+        "include": true
+      }
+    ]
+  }
+}

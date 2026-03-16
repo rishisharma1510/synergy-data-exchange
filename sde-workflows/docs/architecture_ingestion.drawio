@@ -1,0 +1,432 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64)" version="28.1.2">
+  <diagram id="ingestion-three-path" name="Ingestion - Three-Path Architecture">
+    <mxGraphModel dx="1600" dy="1000" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="3200" pageHeight="2000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Title -->
+        <mxCell id="title1" value="INGESTION Pipeline - Three-Path Architecture&lt;br&gt;S3 → .bak/.mdf → SQL Server → Iceberg" style="text;html=1;fontSize=24;fontStyle=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;" parent="1" vertex="1">
+          <mxGeometry x="500" y="20" width="700" height="70" as="geometry" />
+        </mxCell>
+        
+        <!-- Path Summary -->
+        <mxCell id="pathSummary" value="PATH 1: Fargate + Express (≤7GB) | PATH 2: Fargate + Standard (7-60GB) | PATH 3: Batch EC2 + Standard (&gt;60GB)" style="text;html=1;fontSize=14;fontStyle=1;fillColor=#f5f5f5;strokeColor=#666666;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;" parent="1" vertex="1">
+          <mxGeometry x="350" y="100" width="1000" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- AWS Cloud Container -->
+        <mxCell id="awsCloud" value="AWS Cloud" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=14;fontStyle=1;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_aws_cloud;strokeColor=#232F3E;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#232F3E;dashed=0;" parent="1" vertex="1">
+          <mxGeometry x="30" y="150" width="1700" height="1350" as="geometry" />
+        </mxCell>
+        
+        <!-- Client Box -->
+        <mxCell id="clientBox" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=2;" parent="awsCloud" vertex="1">
+          <mxGeometry x="40" y="40" width="150" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="clientLabel" value="Tenant UI / API" style="text;html=1;fontSize=12;fontStyle=1;fillColor=none;align=center;verticalAlign=top;whiteSpace=wrap;fontColor=#9673a6;" parent="awsCloud" vertex="1">
+          <mxGeometry x="50" y="50" width="130" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="submitIng" value="Submit&lt;br&gt;&lt;b&gt;INGESTION&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=0;" parent="awsCloud" vertex="1">
+          <mxGeometry x="55" y="80" width="120" height="45" as="geometry" />
+        </mxCell>
+        
+        <!-- Step Functions Box -->
+        <mxCell id="sfnBox" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5DEB3;strokeColor=#E7157B;strokeWidth=2;" parent="awsCloud" vertex="1">
+          <mxGeometry x="250" y="30" width="220" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="sfnLabel" value="Step Functions" style="text;html=1;fontSize=14;fontStyle=1;fillColor=none;align=center;verticalAlign=top;whiteSpace=wrap;fontColor=#E7157B;" parent="awsCloud" vertex="1">
+          <mxGeometry x="310" y="38" width="100" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="sfnIcon" value="" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#E7157B;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.step_functions" parent="awsCloud" vertex="1">
+          <mxGeometry x="335" y="65" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="sizeRouter" value="SIZE ROUTER (Choice State)" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" parent="awsCloud" vertex="1">
+          <mxGeometry x="265" y="115" width="190" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- PATH 1: FARGATE + EXPRESS (≤7GB) -->
+        <mxCell id="path1Box" value="" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=13;fontStyle=1;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_vpc;strokeColor=#248814;fillColor=#e8f5e9;verticalAlign=top;align=left;spacingLeft=30;fontColor=#248814;dashed=0;" parent="awsCloud" vertex="1">
+          <mxGeometry x="40" y="200" width="520" height="340" as="geometry" />
+        </mxCell>
+        <mxCell id="path1Label" value="PATH 1: ECS Fargate + SQL Express (≤7GB) - FREE" style="text;html=1;fontSize=13;fontStyle=1;fillColor=#248814;strokeColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontColor=#ffffff;rounded=1;" parent="path1Box" vertex="1">
+          <mxGeometry x="60" y="15" width="400" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="p1Specs" value="4 vCPU | 8 GB RAM | 200 GB Ephemeral | ~$0.55-0.65/run" style="text;html=1;fontSize=10;fontStyle=2;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;rounded=1;" parent="path1Box" vertex="1">
+          <mxGeometry x="60" y="45" width="400" height="20" as="geometry" />
+        </mxCell>
+        
+        <!-- SQL Express Sidecar -->
+        <mxCell id="p1SqlBox" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#d6b656;dashed=1;strokeWidth=2;" parent="path1Box" vertex="1">
+          <mxGeometry x="20" y="75" width="150" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="p1SqlLabel" value="SQL Express&lt;br&gt;&lt;b&gt;FREE&lt;/b&gt;&lt;br&gt;10GB limit" style="text;html=1;fontSize=10;fontStyle=0;fillColor=none;align=center;verticalAlign=top;whiteSpace=wrap;fontColor=#d79b00;" parent="path1Box" vertex="1">
+          <mxGeometry x="30" y="80" width="130" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="p1SqlIcon" value="SQL&lt;br&gt;Express" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#248814;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=9;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.ec2" parent="path1Box" vertex="1">
+          <mxGeometry x="35" y="130" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p1Step1" value="1. RESTORE DB" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#d5e8d4;strokeColor=#82b366;" parent="path1Box" vertex="1">
+          <mxGeometry x="85" y="135" width="75" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p1Step2" value="2. SELECT *" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#d5e8d4;strokeColor=#82b366;" parent="path1Box" vertex="1">
+          <mxGeometry x="30" y="175" width="75" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p1Step3" value="3. PYARROW" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#d5e8d4;strokeColor=#82b366;" parent="path1Box" vertex="1">
+          <mxGeometry x="115" y="175" width="75" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p1Step4" value="4. DROP DB" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="path1Box" vertex="1">
+          <mxGeometry x="60" y="215" width="75" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Python Container -->
+        <mxCell id="p1PyBox" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;strokeWidth=2;" parent="path1Box" vertex="1">
+          <mxGeometry x="190" y="75" width="310" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="p1PyLabel" value="Python Pipeline + SID Transform" style="text;html=1;fontSize=10;fontStyle=1;fillColor=none;align=center;verticalAlign=top;whiteSpace=wrap;fontColor=#666666;" parent="path1Box" vertex="1">
+          <mxGeometry x="230" y="80" width="230" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p1Mod1" value="ArtifactRestorer" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#d5e8d4;strokeColor=#82b366;" parent="path1Box" vertex="1">
+          <mxGeometry x="205" y="110" width="85" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p1Mod2" value="SqlReader" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#d5e8d4;strokeColor=#82b366;" parent="path1Box" vertex="1">
+          <mxGeometry x="300" y="110" width="85" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p1Mod3" value="IcebergWriter" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#d5e8d4;strokeColor=#82b366;" parent="path1Box" vertex="1">
+          <mxGeometry x="400" y="110" width="85" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p1Mod4" value="ColumnMapper" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="path1Box" vertex="1">
+          <mxGeometry x="205" y="150" width="85" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p1Mod5" value="ProgressReporter" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#e1d5e7;strokeColor=#9673a6;" parent="path1Box" vertex="1">
+          <mxGeometry x="300" y="150" width="85" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p1Mod6" value="S3Downloader" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#d5e8d4;strokeColor=#82b366;" parent="path1Box" vertex="1">
+          <mxGeometry x="400" y="150" width="85" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p1Mod7" value="SIDTransformer" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#E6D0DE;strokeColor=#9673a6;fontStyle=1;" parent="path1Box" vertex="1">
+          <mxGeometry x="205" y="185" width="85" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p1Mod8" value="ExposureClient" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#E6D0DE;strokeColor=#9673a6;fontStyle=1;" parent="path1Box" vertex="1">
+          <mxGeometry x="300" y="185" width="85" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p1Mod9" value="SIDClient" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#E6D0DE;strokeColor=#9673a6;fontStyle=1;" parent="path1Box" vertex="1">
+          <mxGeometry x="400" y="185" width="85" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p1Eph" value="Ephemeral Storage (200 GB)" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;" parent="path1Box" vertex="1">
+          <mxGeometry x="205" y="220" width="280" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="p1Bak" value=".bak" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#d5e8d4;strokeColor=#82b366;" parent="path1Box" vertex="1">
+          <mxGeometry x="215" y="255" width="60" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="p1Mdf" value=".mdf" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#d5e8d4;strokeColor=#82b366;" parent="path1Box" vertex="1">
+          <mxGeometry x="290" y="255" width="60" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="p1Man" value="parquet" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#d5e8d4;strokeColor=#82b366;" parent="path1Box" vertex="1">
+          <mxGeometry x="365" y="255" width="60" height="25" as="geometry" />
+        </mxCell>
+        
+        <!-- PATH 2: FARGATE + STANDARD (7-60GB) -->
+        <mxCell id="path2Box" value="" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=13;fontStyle=1;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_vpc;strokeColor=#0066CC;fillColor=#e6f2ff;verticalAlign=top;align=left;spacingLeft=30;fontColor=#0066CC;dashed=0;" parent="awsCloud" vertex="1">
+          <mxGeometry x="40" y="580" width="520" height="340" as="geometry" />
+        </mxCell>
+        <mxCell id="path2Label" value="PATH 2: ECS Fargate + SQL Standard (7-60GB) - Licensed" style="text;html=1;fontSize=13;fontStyle=1;fillColor=#0066CC;strokeColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontColor=#ffffff;rounded=1;" parent="path2Box" vertex="1">
+          <mxGeometry x="50" y="15" width="420" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="p2Specs" value="8 vCPU | 16 GB RAM | 200 GB Ephemeral | ~$0.90-1.20/run" style="text;html=1;fontSize=10;fontStyle=2;fillColor=#cce0ff;strokeColor=#0066CC;align=center;verticalAlign=middle;rounded=1;" parent="path2Box" vertex="1">
+          <mxGeometry x="60" y="45" width="400" height="20" as="geometry" />
+        </mxCell>
+        
+        <!-- SQL Standard Sidecar -->
+        <mxCell id="p2SqlBox" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#cce0ff;strokeColor=#0066CC;dashed=1;strokeWidth=2;" parent="path2Box" vertex="1">
+          <mxGeometry x="20" y="75" width="150" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="p2SqlLabel" value="SQL Standard&lt;br&gt;&lt;b&gt;Licensed&lt;/b&gt;&lt;br&gt;NO size limit" style="text;html=1;fontSize=10;fontStyle=0;fillColor=none;align=center;verticalAlign=top;whiteSpace=wrap;fontColor=#0066CC;" parent="path2Box" vertex="1">
+          <mxGeometry x="30" y="80" width="130" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="p2SqlIcon" value="SQL&lt;br&gt;Standard" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#0066CC;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=9;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.ec2" parent="path2Box" vertex="1">
+          <mxGeometry x="35" y="130" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p2Step1" value="1. RESTORE DB" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#cce0ff;strokeColor=#0066CC;" parent="path2Box" vertex="1">
+          <mxGeometry x="85" y="135" width="75" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p2Step2" value="2. SELECT *" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#cce0ff;strokeColor=#0066CC;" parent="path2Box" vertex="1">
+          <mxGeometry x="30" y="175" width="75" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p2Step3" value="3. PYARROW" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#cce0ff;strokeColor=#0066CC;" parent="path2Box" vertex="1">
+          <mxGeometry x="115" y="175" width="75" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p2Step4" value="4. DROP DB" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="path2Box" vertex="1">
+          <mxGeometry x="60" y="215" width="75" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Python Container -->
+        <mxCell id="p2PyBox" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;strokeWidth=2;" parent="path2Box" vertex="1">
+          <mxGeometry x="190" y="75" width="310" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="p2PyLabel" value="Python Pipeline - SAME CODE" style="text;html=1;fontSize=10;fontStyle=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;" parent="path2Box" vertex="1">
+          <mxGeometry x="250" y="85" width="190" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p2Same" value="✓ Same Docker image&lt;br&gt;✓ SID Transform + Exposure API&lt;br&gt;✓ MSSQL_PID=Standard" style="text;html=1;fontSize=10;fontStyle=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;rounded=1;" parent="path2Box" vertex="1">
+          <mxGeometry x="250" y="115" width="190" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="p2Localhost" value="SQLSERVER_HOST = localhost" style="text;html=1;fontSize=10;fontStyle=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;rounded=1;" parent="path2Box" vertex="1">
+          <mxGeometry x="250" y="190" width="190" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="p2Eph" value="Ephemeral Storage (200 GB)" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#cce0ff;strokeColor=#0066CC;fontStyle=1;" parent="path2Box" vertex="1">
+          <mxGeometry x="205" y="230" width="280" height="25" as="geometry" />
+        </mxCell>
+        
+        <!-- PATH 3: AWS BATCH + STANDARD (>60GB) -->
+        <mxCell id="path3Box" value="" style="points=[[0,0],[0.25,0],[0.5,0],[0.75,0],[1,0],[1,0.25],[1,0.5],[1,0.75],[1,1],[0.75,1],[0.5,1],[0.25,1],[0,1],[0,0.75],[0,0.5],[0,0.25]];outlineConnect=0;gradientColor=none;html=1;whiteSpace=wrap;fontSize=13;fontStyle=1;container=1;pointerEvents=0;collapsible=0;recursiveResize=0;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_vpc;strokeColor=#FF8C00;fillColor=#fff5e6;verticalAlign=top;align=left;spacingLeft=30;fontColor=#FF8C00;dashed=0;" parent="awsCloud" vertex="1">
+          <mxGeometry x="40" y="960" width="520" height="340" as="geometry" />
+        </mxCell>
+        <mxCell id="path3Label" value="PATH 3: AWS Batch EC2 + SQL Standard (&gt;60GB)" style="text;html=1;fontSize=13;fontStyle=1;fillColor=#FF8C00;strokeColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontColor=#ffffff;rounded=1;" parent="path3Box" vertex="1">
+          <mxGeometry x="60" y="15" width="400" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="p3Specs" value="16+ vCPU | 64+ GB RAM | 500+ GB EBS gp3 | ~$1.50-2.50/run | NO LIMIT" style="text;html=1;fontSize=10;fontStyle=2;fillColor=#FFE6CC;strokeColor=#FF8C00;align=center;verticalAlign=middle;rounded=1;" parent="path3Box" vertex="1">
+          <mxGeometry x="40" y="45" width="440" height="20" as="geometry" />
+        </mxCell>
+        
+        <!-- SQL Standard Sidecar -->
+        <mxCell id="p3SqlBox" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#FF8C00;dashed=1;strokeWidth=2;" parent="path3Box" vertex="1">
+          <mxGeometry x="20" y="75" width="150" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="p3SqlLabel" value="SQL Standard&lt;br&gt;&lt;b&gt;Licensed&lt;/b&gt;&lt;br&gt;NO size limit" style="text;html=1;fontSize=10;fontStyle=0;fillColor=none;align=center;verticalAlign=top;whiteSpace=wrap;fontColor=#FF8C00;" parent="path3Box" vertex="1">
+          <mxGeometry x="30" y="80" width="130" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="p3SqlIcon" value="SQL&lt;br&gt;Standard" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#FF8C00;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=9;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.ec2" parent="path3Box" vertex="1">
+          <mxGeometry x="35" y="130" width="40" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p3Step1" value="1. RESTORE DB" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#FFE6CC;strokeColor=#FF8C00;" parent="path3Box" vertex="1">
+          <mxGeometry x="85" y="135" width="75" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p3Step2" value="2. SELECT *" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#FFE6CC;strokeColor=#FF8C00;" parent="path3Box" vertex="1">
+          <mxGeometry x="30" y="175" width="75" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p3Step3" value="3. PYARROW" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#FFE6CC;strokeColor=#FF8C00;" parent="path3Box" vertex="1">
+          <mxGeometry x="115" y="175" width="75" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p3Step4" value="4. DROP DB" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="path3Box" vertex="1">
+          <mxGeometry x="60" y="215" width="75" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Python Container -->
+        <mxCell id="p3PyBox" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;dashed=1;strokeWidth=2;" parent="path3Box" vertex="1">
+          <mxGeometry x="190" y="75" width="310" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="p3PyLabel" value="Python Pipeline - SAME CODE" style="text;html=1;fontSize=10;fontStyle=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;" parent="path3Box" vertex="1">
+          <mxGeometry x="250" y="85" width="190" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="p3Same" value="✓ Same Docker image&lt;br&gt;✓ SID Transform + Exposure API&lt;br&gt;✓ MSSQL_PID=Standard" style="text;html=1;fontSize=10;fontStyle=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;rounded=1;" parent="path3Box" vertex="1">
+          <mxGeometry x="250" y="115" width="190" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="p3Localhost" value="SQLSERVER_HOST = localhost" style="text;html=1;fontSize=10;fontStyle=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;rounded=1;" parent="path3Box" vertex="1">
+          <mxGeometry x="250" y="190" width="190" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="p3Ebs" value="EBS Storage (500+ GB gp3)" style="rounded=1;whiteSpace=wrap;html=1;fontSize=9;fillColor=#FFE6CC;strokeColor=#FF8C00;fontStyle=1;" parent="path3Box" vertex="1">
+          <mxGeometry x="205" y="230" width="280" height="25" as="geometry" />
+        </mxCell>
+        
+        <!-- Lambda Services -->
+        <mxCell id="lambdaTenant" value="TenantContext&lt;br&gt;Lambda" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#F58534;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda" parent="awsCloud" vertex="1">
+          <mxGeometry x="530" y="60" width="50" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="lambdaTenantNote" value="Returns: glue_db, bucket, OAuth creds&lt;br&gt;Called at pipeline start | TTL cache 50 min" style="text;html=1;fontSize=9;fontStyle=2;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;rounded=1;" parent="awsCloud" vertex="1">
+          <mxGeometry x="590" y="62" width="220" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="secretsMgr" value="Secrets Manager&lt;br&gt;OAuth Creds" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#DD344C;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.secrets_manager" parent="awsCloud" vertex="1">
+          <mxGeometry x="530" y="120" width="50" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="secretsNote" value="SID OAuth token&lt;br&gt;app_token_secret_name" style="text;html=1;fontSize=9;fontStyle=2;fillColor=#f8cecc;strokeColor=#b85450;align=center;verticalAlign=middle;rounded=1;" parent="awsCloud" vertex="1">
+          <mxGeometry x="590" y="120" width="180" height="35" as="geometry" />
+        </mxCell>
+        <!-- Lambda flow arrows -->
+        <mxCell id="arTenantLambda" value="Get config" style="html=1;strokeColor=#F58534;strokeWidth=2;endArrow=block;endFill=1;fontStyle=1;fontSize=9;fontColor=#F58534;dashed=1;" parent="awsCloud" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="560" y="350" as="sourcePoint" />
+            <mxPoint x="555" y="110" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <!-- S3 Progress -->
+        <mxCell id="s3progress" value="S3 Progress&lt;br&gt;&lt;b&gt;progress.json&lt;/b&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#3F8624;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3" parent="awsCloud" vertex="1">
+          <mxGeometry x="680" y="780" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="arProgress1" value="Write progress" style="html=1;strokeColor=#e1d5e7;strokeWidth=2;endArrow=block;endFill=1;fontStyle=0;fontSize=9;fontColor=#9673a6;dashed=1;" parent="awsCloud" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="560" y="490" as="sourcePoint" />
+            <mxPoint x="680" y="810" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- External Services -->
+        <mxCell id="exposureApi" value="Exposure API&lt;br&gt;&lt;b&gt;NEW SID&lt;/b&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#9673a6;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.api_gateway" parent="awsCloud" vertex="1">
+          <mxGeometry x="680" y="150" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="sidService" value="SID Service&lt;br&gt;&lt;b&gt;Allocate&lt;/b&gt;" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#9673a6;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.api_gateway" parent="awsCloud" vertex="1">
+          <mxGeometry x="760" y="150" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="gluecat" value="Glue Catalog" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#8C4FFF;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.glue" parent="awsCloud" vertex="1">
+          <mxGeometry x="680" y="450" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="s3lake" value="S3 Data Lake&lt;br&gt;&lt;b&gt;OUTPUT&lt;/b&gt;&lt;br&gt;Iceberg Parquet" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#3F8624;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3" parent="awsCloud" vertex="1">
+          <mxGeometry x="680" y="580" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="s3artifacts" value="S3 Artifacts&lt;br&gt;&lt;b&gt;INPUT&lt;/b&gt;&lt;br&gt;.bak files" style="outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#3F8624;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=10;fontStyle=1;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3" parent="awsCloud" vertex="1">
+          <mxGeometry x="680" y="270" width="60" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- Flow Arrows -->
+        <mxCell id="ar1" value="" style="html=1;strokeColor=#232F3E;strokeWidth=2;endArrow=block;endFill=1;" parent="awsCloud" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="190" y="90" as="sourcePoint" />
+            <mxPoint x="250" y="90" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ar2" value="≤7GB" style="html=1;strokeColor=#248814;strokeWidth=3;endArrow=block;endFill=1;fontStyle=1;fontSize=11;fontColor=#248814;" parent="awsCloud" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="360" y="160" as="sourcePoint" />
+            <mxPoint x="300" y="200" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ar3" value="7-60GB" style="html=1;strokeColor=#0066CC;strokeWidth=3;endArrow=block;endFill=1;fontStyle=1;fontSize=11;fontColor=#0066CC;" parent="awsCloud" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="360" y="160" as="sourcePoint" />
+            <mxPoint x="300" y="580" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="360" y="370" />
+              <mxPoint x="300" y="370" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ar4" value="&gt;60GB" style="html=1;strokeColor=#FF8C00;strokeWidth=3;endArrow=block;endFill=1;fontStyle=1;fontSize=11;fontColor=#FF8C00;" parent="awsCloud" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="360" y="160" as="sourcePoint" />
+            <mxPoint x="300" y="960" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="360" y="560" />
+              <mxPoint x="280" y="560" />
+              <mxPoint x="280" y="760" />
+              <mxPoint x="300" y="760" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Data flows -->
+        <mxCell id="sidFlow1" value="SID Allocate" style="html=1;strokeColor=#9673a6;strokeWidth=2;endArrow=block;endFill=1;fontStyle=1;fontSize=9;fontColor=#9673a6;" parent="awsCloud" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="560" y="300" as="sourcePoint" />
+            <mxPoint x="760" y="210" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="expFlow1" value="Exposure API" style="html=1;strokeColor=#9673a6;strokeWidth=2;endArrow=block;endFill=1;fontStyle=1;fontSize=9;fontColor=#9673a6;" parent="awsCloud" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="560" y="280" as="sourcePoint" />
+            <mxPoint x="680" y="210" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ingFlow0" value="Download .bak" style="html=1;strokeColor=#248814;strokeWidth=2;endArrow=block;endFill=1;fontStyle=1;fontSize=9;fontColor=#248814;" parent="awsCloud" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="680" y="310" as="sourcePoint" />
+            <mxPoint x="560" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ingFlow1" value="Write" style="html=1;strokeColor=#82b366;strokeWidth=2;endArrow=block;endFill=1;fontStyle=0;fontSize=9;fontColor=#82b366;" parent="awsCloud" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="560" y="460" as="sourcePoint" />
+            <mxPoint x="680" y="490" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ingFlow2" value="Write" style="html=1;strokeColor=#82b366;strokeWidth=2;endArrow=block;endFill=1;fontStyle=0;fontSize=9;fontColor=#82b366;" parent="awsCloud" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="560" y="500" as="sourcePoint" />
+            <mxPoint x="680" y="610" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ingFlow3" value="Write Parquet" style="html=1;strokeColor=#0066CC;strokeWidth=2;endArrow=block;endFill=1;fontStyle=1;fontSize=10;fontColor=#0066CC;" parent="awsCloud" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="560" y="780" as="sourcePoint" />
+            <mxPoint x="680" y="640" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ingFlow4" value="Write Parquet" style="html=1;strokeColor=#FF8C00;strokeWidth=2;endArrow=block;endFill=1;fontStyle=1;fontSize=10;fontColor=#FF8C00;" parent="awsCloud" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="560" y="1130" as="sourcePoint" />
+            <mxPoint x="680" y="660" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="620" y="1130" />
+              <mxPoint x="620" y="660" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Legend Box -->
+        <mxCell id="legend" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#cccccc;" parent="awsCloud" vertex="1">
+          <mxGeometry x="800" y="200" width="340" height="520" as="geometry" />
+        </mxCell>
+        <mxCell id="legTitle" value="INGESTION LEGEND" style="text;html=1;fontSize=14;fontStyle=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;rounded=1;" parent="awsCloud" vertex="1">
+          <mxGeometry x="820" y="215" width="300" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="legFlow" value="S3 → .bak → SQL Server → Iceberg" style="text;html=1;fontSize=11;fontStyle=1;fillColor=none;align=center;verticalAlign=middle;" parent="awsCloud" vertex="1">
+          <mxGeometry x="820" y="245" width="300" height="20" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="leg1" value="&lt;font color='#248814'&gt;■ PATH 1: Fargate + Express&lt;/font&gt;" style="text;html=1;fontSize=11;fillColor=none;align=left;verticalAlign=middle;fontStyle=1;" parent="awsCloud" vertex="1">
+          <mxGeometry x="820" y="280" width="300" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="leg1a" value="• Data ≤7GB | FREE SQL license" style="text;html=1;fontSize=10;fillColor=none;align=left;verticalAlign=middle;" parent="awsCloud" vertex="1">
+          <mxGeometry x="820" y="300" width="300" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="leg1b" value="• Cost: ~$0.55-0.65/run" style="text;html=1;fontSize=10;fillColor=none;align=left;verticalAlign=middle;" parent="awsCloud" vertex="1">
+          <mxGeometry x="820" y="318" width="300" height="18" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="leg2" value="&lt;font color='#0066CC'&gt;■ PATH 2: Fargate + Standard&lt;/font&gt;" style="text;html=1;fontSize=11;fillColor=none;align=left;verticalAlign=middle;fontStyle=1;" parent="awsCloud" vertex="1">
+          <mxGeometry x="820" y="350" width="300" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="leg2a" value="• Data 7-60GB | Licensed SQL | Fargate" style="text;html=1;fontSize=10;fillColor=none;align=left;verticalAlign=middle;" parent="awsCloud" vertex="1">
+          <mxGeometry x="820" y="370" width="300" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="leg2b" value="• Cost: ~$0.90-1.20/run" style="text;html=1;fontSize=10;fillColor=none;align=left;verticalAlign=middle;" parent="awsCloud" vertex="1">
+          <mxGeometry x="820" y="388" width="300" height="18" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="leg3" value="&lt;font color='#FF8C00'&gt;■ PATH 3: Batch EC2 + Standard&lt;/font&gt;" style="text;html=1;fontSize=11;fillColor=none;align=left;verticalAlign=middle;fontStyle=1;" parent="awsCloud" vertex="1">
+          <mxGeometry x="820" y="420" width="300" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="leg3a" value="• Data &gt;60GB | NO SIZE LIMIT | EC2" style="text;html=1;fontSize=10;fillColor=none;align=left;verticalAlign=middle;" parent="awsCloud" vertex="1">
+          <mxGeometry x="820" y="440" width="300" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="leg3b" value="• Cost: ~$1.50-2.50/run" style="text;html=1;fontSize=10;fillColor=none;align=left;verticalAlign=middle;" parent="awsCloud" vertex="1">
+          <mxGeometry x="820" y="458" width="300" height="18" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="leg4" value="SAME Python code for ALL 3 paths" style="text;html=1;fontSize=11;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;fontStyle=1;rounded=1;" parent="awsCloud" vertex="1">
+          <mxGeometry x="820" y="495" width="300" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="leg5" value="SQLSERVER_HOST=localhost (all paths)" style="text;html=1;fontSize=10;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;fontStyle=2;rounded=1;" parent="awsCloud" vertex="1">
+          <mxGeometry x="820" y="530" width="300" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="leg6" value="SID Transform: PK/FK remapping via SIDClient" style="text;html=1;fontSize=10;fillColor=#E6D0DE;strokeColor=#9673a6;align=center;verticalAlign=middle;fontStyle=1;rounded=1;" parent="awsCloud" vertex="1">
+          <mxGeometry x="820" y="565" width="300" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="leg7" value="Exposure API: creates new ExposureSet/View" style="text;html=1;fontSize=10;fillColor=#E6D0DE;strokeColor=#9673a6;align=center;verticalAlign=middle;fontStyle=1;rounded=1;" parent="awsCloud" vertex="1">
+          <mxGeometry x="820" y="600" width="300" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="leg8" value="Step Functions routes based on&lt;br&gt;manifest.artifact_size_gb from S3" style="text;html=1;fontSize=10;fillColor=#F5DEB3;strokeColor=#E7157B;align=center;verticalAlign=middle;fontStyle=2;rounded=1;" parent="awsCloud" vertex="1">
+          <mxGeometry x="820" y="635" width="300" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="leg9" value="TenantContext Lambda: per-tenant config&lt;br&gt;(glue_db, bucket, OAuth) | 50-min cache" style="text;html=1;fontSize=10;fillColor=#ffe6cc;strokeColor=#F58534;align=center;verticalAlign=middle;fontStyle=0;rounded=1;" parent="awsCloud" vertex="1">
+          <mxGeometry x="820" y="680" width="300" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="leg10" value="Secrets Manager: SID OAuth token (app_token_secret_name)" style="text;html=1;fontSize=10;fillColor=#f8cecc;strokeColor=#b85450;align=center;verticalAlign=middle;fontStyle=0;rounded=1;" parent="awsCloud" vertex="1">
+          <mxGeometry x="820" y="725" width="300" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="leg11" value="Progress: S3 progress.json + HTTP callbackUrl" style="text;html=1;fontSize=10;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;fontStyle=0;rounded=1;" parent="awsCloud" vertex="1">
+          <mxGeometry x="820" y="763" width="300" height="25" as="geometry" />
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

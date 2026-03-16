@@ -1,0 +1,76 @@
+# Data Extraction/Ingestion Pipeline - Fargate Image
+# Based on SQL Server Standard with Python pipeline tools
+# Supports bidirectional data flow: Extraction (Iceberg → SQL → BAK)
+# and Ingestion (BAK → SQL → Iceberg)
+
+FROM mcr.microsoft.com/mssql/server:2022-latest
+
+# Switch to root for package installation
+USER root
+
+# Install Python 3.12 and dependencies
+# Note: Using build-from-source approach to avoid SSL issues with deadsnakes PPA
+RUN apt-get update && apt-get install -y \
+    curl \
+    unixodbc \
+    unixodbc-dev \
+    build-essential \
+    zlib1g-dev \
+    libncurses5-dev \
+    libgdbm-dev \
+    libnss3-dev \
+    libssl-dev \
+    libsqlite3-dev \
+    libreadline-dev \
+    libffi-dev \
+    libbz2-dev \
+    liblzma-dev \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download and compile Python 3.12
+RUN cd /tmp && \
+    wget --no-check-certificate https://www.python.org/ftp/python/3.12.3/Python-3.12.3.tgz && \
+    tar -xzf Python-3.12.3.tgz && \
+    cd Python-3.12.3 && \
+    ./configure --enable-optimizations --prefix=/usr/local && \
+    make -j$(nproc) && \
+    make altinstall && \
+    cd / && rm -rf /tmp/Python-3.12.3* && \
+    ln -sf /usr/local/bin/python3.12 /usr/bin/python3 && \
+    ln -sf /usr/local/bin/pip3.12 /usr/bin/pip3
+
+# Create application directory
+WORKDIR /app
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN python3.12 -m pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY src/ ./src/
+
+# Set environment variables for SQL Server Standard
+# Using Standard edition for no 10GB database limit (required for large tenant datasets)
+# SPLA licensing applies (~$200-400/month for production)
+ENV ACCEPT_EULA=Y
+ENV MSSQL_PID=Standard
+ENV MSSQL_COLLATION=SQL_Latin1_General_CP1_CI_AS
+
+# Enable advanced features available in Standard edition
+ENV MSSQL_ENABLE_HADR=0
+
+# Create directories for data and backups
+RUN mkdir -p /data/backup /data/mdf && chown -R mssql:root /data
+
+# SQL Server uses ephemeral credentials - set via Secrets Manager at runtime
+# ENV SA_PASSWORD is set at runtime
+
+# Expose SQL Server port
+EXPOSE 1433
+
+# Entry point starts SQL Server then runs extraction/ingestion
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]

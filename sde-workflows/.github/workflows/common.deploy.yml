@@ -1,0 +1,308 @@
+﻿name: Common Deploy Actions
+
+on:
+  workflow_call:
+    inputs:
+      releaseTag:
+        required: true
+        type: string
+      environment:
+        default: 'dev'
+        required: false
+        type: string
+      distinct_id:
+        description: "External Id supplied to this workflow"
+        type: string
+        default: "0"
+      sql_edition:
+        description: "SQL Server edition for PATH 2 and PATH 3: Standard (SPLA, production) or Developer (free, non-prod only). Overrides SQL_EDITION GitHub environment variable."
+        type: string
+        default: ''
+
+  workflow_dispatch:
+    inputs:
+      releaseTag:
+        required: true
+        type: string
+      environment:
+        default: 'dev'
+        required: false
+        type: string
+      distinct_id:
+        description: "External Id supplied to this workflow"
+        type: string
+        default: "0"
+      sql_edition:
+        description: "SQL Server edition for PATH 2 and PATH 3: Standard (SPLA, production) or Developer (free, non-prod only). Overrides SQL_EDITION GitHub environment variable."
+        type: string
+        default: ''
+
+jobs:
+  add-deployment-item:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    timeout-minutes: 1
+    permissions:
+      id-token: write
+      contents: read
+      actions: read
+    steps:
+      - name: echo distinct ID ${{ inputs.distinct_id }}
+        run: echo ${{ inputs.distinct_id }}
+
+      - name: Checkout Composite Action Repository
+        uses: actions/checkout@v4
+        with:
+          repository: ExtremeEventSolutions/ees-compositeactions
+          ref: releases/38
+          path: "compositeactions"
+          token: ${{ secrets.EES_COMPOSITEACTIONS_TOKEN }}
+
+      - name: "Prepare Deployment Parameters"
+        id: "deployment-parameters"
+        run: |
+          environment="${{ inputs.environment }}"
+          releaseTag="${{ inputs.releaseTag }}"
+
+          parameters=$(jq -n \
+            --arg environment "$environment" \
+            --arg releaseTag "$releaseTag" \
+            '{environment: $environment, releaseTag: $releaseTag}')
+
+          echo "DEPLOYMENT_PARAMETERS=$(echo $parameters | jq -c)" >> $GITHUB_ENV
+
+      - name: Add Deployment Item
+        uses: "./compositeactions/add-deployment-item"
+        with:
+          releaseTag: ${{ inputs.releaseTag }}
+          targetEnvironment: ${{ inputs.environment }}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          deploymentParameters: ${{ steps.deployment-parameters.outputs.DEPLOYMENT_PARAMETERS }}
+
+  deploy-env:
+    needs: add-deployment-item
+    name: "Deploy Synergy Data Exchange"
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write
+      contents: write
+      actions: read
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: echo distinct ID ${{ inputs.distinct_id }}
+        run: echo ${{ inputs.distinct_id }}
+
+      - name: "Checkout Source"
+        uses: actions/checkout@v4
+
+      - name: "Checkout Composite Action Repository"
+        uses: actions/checkout@v4
+        with:
+          repository: ExtremeEventSolutions/ees-compositeactions
+          ref: releases/34
+          path: "compositeactions"
+          token: ${{ secrets.EES_COMPOSITEACTIONS_TOKEN }}
+
+      - name: "Get Environment Variables"
+        uses: "./compositeactions/get-environment-variables"
+        with:
+          environment_name: "${{ inputs.environment }}"
+          repo: "ees-vss-deployment"
+          token: "${{ secrets.VSS_GET_ENVIRONMENT_VARIABLES }}"
+
+      - name: "Set NodeJS Version"
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: "Install AWS CDK Toolkit"
+        run: "npm install -g aws-cdk"
+
+      - name: "Setup .NET Core"
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+          dotnet-quality: "ga"
+
+      - name: "Download CDK artifact"
+        uses: "./compositeactions/download-artifact"
+        with:
+          repository: "ees-ap-sde"
+          artifactname: "sde_cdk.zip"
+          localpath: artifacts/cdk
+          release-tag: ${{ inputs.releaseTag }}
+          token: ${{ secrets.READPACKAGE }}
+
+      - name: "Download Python artifact"
+        uses: "./compositeactions/download-artifact"
+        with:
+          repository: "ees-ap-sde"
+          artifactname: "sde_python.zip"
+          localpath: artifacts/python
+          release-tag: ${{ inputs.releaseTag }}
+          token: ${{ secrets.READPACKAGE }}
+
+      - name: "List Downloaded Artifacts for Debugging"
+        run: |
+          echo "Listing artifacts directory structure:"
+          ls -R ./artifacts || echo "Directory does not exist"
+        shell: bash
+
+      - name: "Configure AWS Credentials"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ACCOUNT_ROLE }}
+          role-session-name: EES-AP-SDE-Deployment
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Build full API URLs once here — update the path version in one place if it ever changes
+      - name: "Build API URLs"
+        run: |
+          echo "EXPOSURE_API_URL=${{ env.BASE_URL }}/api/exposure/v1" >> $GITHUB_ENV
+          echo "SID_API_URL=${{ env.BASE_URL }}/api/sid/v1" >> $GITHUB_ENV
+          echo "IDENTITY_PROVIDER_TOKEN_ENDPOINT=${{ env.Issuer }}/v1/token" >> $GITHUB_ENV
+
+      - name: "Bootstrap CDK Application for Synergy Data Exchange Stack"
+        uses: "./compositeactions/cdk-bootstrap"
+        with:
+          accountId: ${{ env.AWS_ACCOUNT_ID }}
+          environment: ${{ inputs.environment }}
+          executionPoliciesDirectory: "${{ github.workspace }}/artifacts/cdk/sde_cdk/BootstrapsExecutionPolicies"
+          owner: "cipher@air-worldwide.com"
+          qualifier: "ss-sde"
+          region: ${{ env.AWS_REGION }}
+          team: "cipher"
+
+      # Deploy ECR Stack FIRST (creates repositories)
+      - name: "Deploy Synergy Data Exchange ECR Stack"
+        working-directory: cdk
+        run: |
+          cdk deploy -a='dotnet ../artifacts/cdk/sde_cdk/EES.AP.SDE.CDK.dll' ss-cdk-sde-ecr-${{ inputs.environment }} \
+            -c TargetEnvironment=${{ inputs.environment }} \
+            -c DeployEcrStack=true \
+            --require-approval never
+        env:
+          SDE_CDK_Settings__InstanceStage: ${{ inputs.environment }}
+          SDE_CDK_Settings__EnvironmentType: ${{ env.ENVIRONMENT_TYPE || inputs.environment }}
+          SDE_CDK_Settings__VpcId: ${{ env.AWS_VPC_ID }}
+          SDE_CDK_Settings__CDK_DEFAULT_ACCOUNT: ${{ env.AWS_ACCOUNT_ID }}
+          SDE_CDK_Settings__CDK_DEFAULT_REGION: ${{ env.AWS_REGION }}
+          SDE_CDK_Settings__Qualifier: "sde"
+          # Routing thresholds — Lambda uses these to decide Express / Standard / Batch path.
+          SDE_CDK_Settings__StepFunctions__ThresholdSmallGb: ${{ env.THRESHOLD_SMALL_GB || '9' }}
+          SDE_CDK_Settings__StepFunctions__ThresholdLargeGb: ${{ env.THRESHOLD_LARGE_GB || '80' }}      - name: "Login to Amazon ECR"
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Tag images for this environment — images were built and pushed during the
+      # build phase (tagged with gitversion). Here we re-tag with releaseTag so
+      # CDK can reference a stable, environment-specific tag.
+      - name: "Tag Docker Images for Environment"
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          RELEASE_TAG: ${{ inputs.releaseTag }}
+        run: |
+          REPO_BASE="${ECR_REGISTRY}/ss-cdk${{ inputs.environment }}-Synergy Data Exchange"
+          for image in express standard batch; do
+            docker pull ${REPO_BASE}-${image}:latest
+            docker tag  ${REPO_BASE}-${image}:latest ${REPO_BASE}-${image}:${RELEASE_TAG}
+            docker push ${REPO_BASE}-${image}:${RELEASE_TAG}
+          done
+
+      # Deploy Fargate + Step Functions Stacks together — they share cross-stack CloudFormation
+      # exports (ExpressTaskDefinitionArn, StandardTaskDefinitionArn). Deploying separately causes
+      # "cannot update export in use" errors; a single cdk deploy resolves both atomically.
+      - name: "Deploy Synergy Data Exchange Fargate + Step Functions Stacks"
+        working-directory: cdk
+        run: |
+          cdk deploy -a='dotnet ../artifacts/cdk/sde_cdk/EES.AP.SDE.CDK.dll' \
+            ss-cdk-sde-fargate-${{ inputs.environment }} \
+            ss-cdk-sde-stepfunctions-${{ inputs.environment }} \
+            -c TargetEnvironment=${{ inputs.environment }} \
+            -c DeployFargateStack=true \
+            -c DeployStepFunctionsStack=true \
+            -c ImageTag=${{ inputs.releaseTag }} \
+            --require-approval never
+        env:
+          SDE_CDK_Settings__InstanceStage: ${{ inputs.environment }}
+          SDE_CDK_Settings__EnvironmentType: ${{ env.ENVIRONMENT_TYPE || inputs.environment }}
+          SDE_CDK_Settings__VpcId: ${{ env.AWS_VPC_ID }}
+          SDE_CDK_Settings__CDK_DEFAULT_ACCOUNT: ${{ env.AWS_ACCOUNT_ID }}
+          SDE_CDK_Settings__CDK_DEFAULT_REGION: ${{ env.AWS_REGION }}
+          SDE_CDK_Settings__Qualifier: "sde"
+          SDE_CDK_ApplicationVariables__ImageTag: ${{ inputs.releaseTag }}
+          SDE_CDK_ApplicationVariables__VpcId: ${{ env.AWS_VPC_ID }}
+          SDE_CDK_ApplicationVariables__SubnetIds: ${{ env.PRIVATE_APP_SUBNET_IDS }}
+          SDE_CDK_ApplicationVariables__SecurityGroupIds: ${{ env.INTERNAL_SECURITY_GROUP }}
+          SDE_CDK_ApplicationVariables__TenantContextLambda: rs-cdk${{ inputs.environment }}-ap-tenant-context-lambda
+          SDE_CDK_ApplicationVariables__AppTokenSecret: rs-cdk${{ inputs.environment }}-app-token-secret
+          SDE_CDK_ApplicationVariables__IdentityProviderTokenEndpoint: ${{ env.IDENTITY_PROVIDER_TOKEN_ENDPOINT }}
+          SDE_CDK_ApplicationVariables__ExposureApiUrl: ${{ env.EXPOSURE_API_URL }}
+          SDE_CDK_ApplicationVariables__SidApiUrl: ${{ env.SID_API_URL }}
+          # Dynatrace observability — same secrets shared with SynergyDrive
+          SDE_CDK_ApplicationVariables__DT_ONE_AGENT_LAYER_ARN_PYTHON: ${{ env.DT_ONE_AGENT_LAYER_ARN_PYTHON }}
+          SDE_CDK_ApplicationVariables__DT_CLUSTER_ID: ${{ env.DT_CLUSTER_ID }}
+          SDE_CDK_ApplicationVariables__DT_CONNECTION_AUTH_TOKEN: ${{ env.DT_CONNECTION_AUTH_TOKEN }}
+          SDE_CDK_ApplicationVariables__DT_CONNECTION_BASE_URL: ${{ env.DT_CONNECTION_BASE_URL }}
+          SDE_CDK_ApplicationVariables__DT_LOG_COLLECTION_AUTH_TOKEN: ${{ env.DT_LOG_COLLECTION_AUTH_TOKEN }}
+          SDE_CDK_ApplicationVariables__DT_TENANT: ${{ env.DT_TENANT }}
+          SDE_CDK_ApplicationVariables__AWS_LAMBDA_EXEC_WRAPPER: ${{ env.AWS_LAMBDA_EXEC_WRAPPER }}
+          # Fargate resource sizing — set EXPRESS_CPU / EXPRESS_MEMORY / STANDARD_CPU / STANDARD_MEMORY
+          # EXPRESS_MAX_PARALLEL_TABLES / STANDARD_MAX_PARALLEL_TABLES in the GitHub environment.
+          SDE_CDK_Settings__Fargate__ExpressCpu: ${{ env.EXPRESS_CPU || '4096' }}
+          SDE_CDK_Settings__Fargate__ExpressMemory: ${{ env.EXPRESS_MEMORY || '30720' }}
+          SDE_CDK_Settings__Fargate__ExpressMaxParallelTables: ${{ env.EXPRESS_MAX_PARALLEL_TABLES || '4' }}
+          SDE_CDK_Settings__Fargate__StandardCpu: ${{ env.STANDARD_CPU || '8192' }}
+          SDE_CDK_Settings__Fargate__StandardMemory: ${{ env.STANDARD_MEMORY || '61440' }}
+          SDE_CDK_Settings__Fargate__StandardMaxParallelTables: ${{ env.STANDARD_MAX_PARALLEL_TABLES || '8' }}
+          # SQL Server edition for PATH 2 (Standard Fargate) and PATH 3 (Batch).
+          # Set SQL_EDITION=Developer in the GitHub non-prod environment to eliminate SPLA licensing cost
+          # across all non-prod deployments. NEVER set Developer on production environments.
+          # Standard = SPLA-liable (production). Developer = free dev/test (non-prod only).
+          # Defaults to Standard so production is safe if the variable is accidentally unset.
+          # inputs.sql_edition (from workflow dispatch / manual.deploy.yml) takes priority over
+          # the GitHub environment variable SQL_EDITION, which in turn falls back to Standard.
+          SDE_CDK_Settings__Fargate__SqlEdition: ${{ inputs.sql_edition || env.SQL_EDITION || 'Standard' }}
+          SDE_CDK_Settings__Batch__SqlEdition: ${{ inputs.sql_edition || env.SQL_EDITION || 'Standard' }}
+          # Routing thresholds — set THRESHOLD_SMALL_GB / THRESHOLD_LARGE_GB in GitHub environment.
+          SDE_CDK_Settings__StepFunctions__ThresholdSmallGb: ${{ env.THRESHOLD_SMALL_GB || '9' }}
+          SDE_CDK_Settings__StepFunctions__ThresholdLargeGb: ${{ env.THRESHOLD_LARGE_GB || '80' }}
+
+      # Deploy Batch Stack (PATH 3: >80GB databases using EC2 with EBS volumes)
+      - name: "Deploy Synergy Data Exchange Batch Stack"
+        working-directory: cdk
+        run: |
+          cdk deploy -a='dotnet ../artifacts/cdk/sde_cdk/EES.AP.SDE.CDK.dll' ss-cdk-sde-batch-${{ inputs.environment }} \
+            -c TargetEnvironment=${{ inputs.environment }} \
+            -c DeployBatchStack=true \
+            -c ImageTag=${{ inputs.releaseTag }} \
+            --require-approval never
+        env:
+          SDE_CDK_Settings__InstanceStage: ${{ inputs.environment }}
+          SDE_CDK_Settings__EnvironmentType: ${{ env.ENVIRONMENT_TYPE || inputs.environment }}
+          SDE_CDK_Settings__VpcId: ${{ env.AWS_VPC_ID }}
+          SDE_CDK_Settings__CDK_DEFAULT_ACCOUNT: ${{ env.AWS_ACCOUNT_ID }}
+          SDE_CDK_Settings__CDK_DEFAULT_REGION: ${{ env.AWS_REGION }}
+          SDE_CDK_Settings__Qualifier: "sde"
+          SDE_CDK_ApplicationVariables__ImageTag: ${{ inputs.releaseTag }}
+          SDE_CDK_ApplicationVariables__VpcId: ${{ env.AWS_VPC_ID }}
+          SDE_CDK_ApplicationVariables__SubnetIds: ${{ env.PRIVATE_APP_SUBNET_IDS }}
+          SDE_CDK_ApplicationVariables__SecurityGroupIds: ${{ env.INTERNAL_SECURITY_GROUP }}
+          SDE_CDK_ApplicationVariables__TenantContextLambda: rs-cdk${{ inputs.environment }}-ap-tenant-context-lambda
+          SDE_CDK_ApplicationVariables__AppTokenSecret: rs-cdk${{ inputs.environment }}-app-token-secret
+          SDE_CDK_ApplicationVariables__IdentityProviderTokenEndpoint: ${{ env.IDENTITY_PROVIDER_TOKEN_ENDPOINT }}
+          SDE_CDK_ApplicationVariables__ExposureApiUrl: ${{ env.EXPOSURE_API_URL }}
+          SDE_CDK_ApplicationVariables__SidApiUrl: ${{ env.SID_API_URL }}
+          # Batch resource sizing — set BATCH_CPU / BATCH_MEMORY / BATCH_MAX_PARALLEL_TABLES / BATCH_MAX_VCPUS in GitHub environment.
+          SDE_CDK_Settings__Batch__JobVcpus: ${{ env.BATCH_CPU || '16' }}
+          SDE_CDK_Settings__Batch__JobMemory: ${{ env.BATCH_MEMORY || '65536' }}
+          SDE_CDK_Settings__Batch__JobMaxParallelTables: ${{ env.BATCH_MAX_PARALLEL_TABLES || '16' }}
+          SDE_CDK_Settings__Batch__MaxVcpus: ${{ env.BATCH_MAX_VCPUS || '1024' }}
+          SDE_CDK_Settings__Batch__SqlEdition: ${{ inputs.sql_edition || env.SQL_EDITION || 'Standard' }}
+          # Routing thresholds (used for MAX_DATABASE_SIZE_GB upper bound pass-through)
+          SDE_CDK_Settings__StepFunctions__ThresholdSmallGb: ${{ env.THRESHOLD_SMALL_GB || '9' }}
+          SDE_CDK_Settings__StepFunctions__ThresholdLargeGb: ${{ env.THRESHOLD_LARGE_GB || '80' }}
+

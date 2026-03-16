@@ -1,0 +1,32 @@
+﻿name: Common Build Actions
+
+on:
+  workflow_call:
+    inputs:
+      SDEChangesFound:
+        required: true
+        type: string
+      gitversion:
+        description: "gitversion calculated in build workflow passed to deployment workflow"
+        required: true
+        type: string
+      daysToRetain:
+        description: "days to retain artifacts"
+        required: true
+        type: string
+
+jobs:
+  Initiate-Build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Initiate Build
+        run: echo "Initiating build..."
+        shell: bash
+
+  SDEBuild:
+    uses: ./.github/workflows/common.build.Synergy Data Exchange.yml
+    with:
+      daysToRetain: ${{ inputs.daysToRetain }}
+      gitversion: ${{ inputs.gitversion }}
+      SDEChangesFound: ${{ inputs.SDEChangesFound }}
+    secrets: inherit

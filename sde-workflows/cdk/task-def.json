@@ -1,0 +1,136 @@
+﻿{
+    "taskDefinitionArn": "arn:aws:ecs:us-east-1:451952076009:task-definition/ss-cdkdev-sde-express:1",
+    "containerDefinitions": [
+        {
+            "name": "ss-cdkdev-sde-express",
+            "image": "451952076009.dkr.ecr.us-east-1.amazonaws.com/ss-cdkdev-sde-express:latest",
+            "cpu": 0,
+            "links": [],
+            "portMappings": [],
+            "essential": true,
+            "entryPoint": [],
+            "command": [],
+            "environment": [
+                {
+                    "name": "APP_TOKEN_SECRET",
+                    "value": "rs-cdkdev-app-token-secret"
+                },
+                {
+                    "name": "AWS_REGION",
+                    "value": "us-east-1"
+                },
+                {
+                    "name": "MSSQL_PID",
+                    "value": "Express"
+                },
+                {
+                    "name": "MAX_DATABASE_SIZE_GB",
+                    "value": "7"
+                },
+                {
+                    "name": "SQL_EDITION",
+                    "value": "express"
+                },
+                {
+                    "name": "TENANT_CONTEXT_LAMBDA",
+                    "value": "rs-cdkdev-ap-tenant-context-lambda"
+                },
+                {
+                    "name": "PATH_TYPE",
+                    "value": "EXPRESS"
+                },
+                {
+                    "name": "OKTA_URL",
+                    "value": "https://sso-dev-na.synergystudio.verisk.com"
+                }
+            ],
+            "environmentFiles": [],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "secrets": [
+                {
+                    "name": "SA_PASSWORD",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-1:451952076009:secret:ss-cdkdev-sde-sa-password-YpPubY"
+                }
+            ],
+            "dnsServers": [],
+            "dnsSearchDomains": [],
+            "extraHosts": [],
+            "dockerSecurityOptions": [],
+            "dockerLabels": {},
+            "ulimits": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/ss-cdkdev-sde/express",
+                    "awslogs-region": "us-east-1",
+                    "awslogs-stream-prefix": "express"
+                },
+                "secretOptions": []
+            },
+            "systemControls": [],
+            "credentialSpecs": []
+        }
+    ],
+    "family": "ss-cdkdev-sde-express",
+    "taskRoleArn": "arn:aws:iam::451952076009:role/ss-cdkdev-sde-fargate-task-role",
+    "executionRoleArn": "arn:aws:iam::451952076009:role/ss-cdkdev-sde-fargate-exec-role",
+    "networkMode": "awsvpc",
+    "revision": 1,
+    "volumes": [],
+    "status": "ACTIVE",
+    "requiresAttributes": [
+        {
+            "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+        },
+        {
+            "name": "ecs.capability.execution-role-awslogs"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.ecr-auth"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+        },
+        {
+            "name": "ecs.capability.secrets.asm.environment-variables"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.17"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.task-iam-role"
+        },
+        {
+            "name": "ecs.capability.execution-role-ecr-pull"
+        },
+        {
+            "name": "ecs.capability.extensible-ephemeral-storage"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+        },
+        {
+            "name": "ecs.capability.task-eni"
+        }
+    ],
+    "placementConstraints": [],
+    "compatibilities": [
+        "EC2",
+        "FARGATE"
+    ],
+    "runtimePlatform": {
+        "cpuArchitecture": "X86_64",
+        "operatingSystemFamily": "LINUX"
+    },
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "4096",
+    "memory": "8192",
+    "registeredAt": "2026-03-01T09:09:06.971000-05:00",
+    "registeredBy": "arn:aws:sts::451952076009:assumed-role/cdk-hnb659fds-cfn-exec-role-451952076009-us-east-1/AWSCloudFormation",
+    "ephemeralStorage": {
+        "sizeInGiB": 200
+    }
+}

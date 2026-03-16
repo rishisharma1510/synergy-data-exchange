@@ -1,0 +1,61 @@
+name: "Common Get Required Variables"
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+    outputs:
+      AWS_ACCOUNT_ID:
+        description: 'The AWS Account ID for the target environment'
+        value: ${{ jobs.get-env-vars.outputs.AWS_ACCOUNT_ID }}
+      AWS_REGION:
+        description: 'The AWS Region for the target environment'
+        value: ${{ jobs.get-env-vars.outputs.AWS_REGION }}
+      VPC_ID:
+        description: 'The VPC ID for the target environment'
+        value: ${{ jobs.get-env-vars.outputs.VPC_ID }}
+      SUBNET_IDS:
+        description: 'The Subnet IDs for the target environment'
+        value: ${{ jobs.get-env-vars.outputs.SUBNET_IDS }}
+
+jobs:
+  get-env-vars:
+    name: "Get Env Vars"
+    runs-on: ubuntu-latest
+    outputs:
+      AWS_ACCOUNT_ID: ${{ steps.get-env-vars-step.outputs.AWS_ACCOUNT_ID }}
+      AWS_REGION: ${{ steps.get-env-vars-step.outputs.AWS_REGION }}
+      VPC_ID: ${{ steps.get-env-vars-step.outputs.VPC_ID }}
+      SUBNET_IDS: ${{ steps.get-env-vars-step.outputs.SUBNET_IDS }}
+
+    permissions:
+      packages: read
+      contents: read
+      id-token: write
+      checks: write
+
+    steps:
+      - name: "Checkout Source"
+        uses: actions/checkout@v4
+
+      - name: "Checkout Composite Action Repository"
+        uses: actions/checkout@v4
+        with:
+          repository: "ExtremeEventSolutions/ees-compositeactions"
+          ref: releases/38
+          path: "compositeactions"
+          token: ${{ secrets.EES_COMPOSITEACTIONS_TOKEN }}
+
+      - name: "Get Environment Variables"
+        uses: ./compositeactions/get-environment-variables
+        with:
+          environment_name: "${{ inputs.environment }}"
+          repo: ees-vss-deployment
+          token: ${{ secrets.VSS_GET_ENVIRONMENT_VARIABLES }}
+
+      - id: get-env-vars-step
+        run: |
+          for var in AWS_ACCOUNT_ID AWS_REGION VPC_ID SUBNET_IDS; do
+            echo "$var=${!var}" >> "$GITHUB_OUTPUT"
+          done

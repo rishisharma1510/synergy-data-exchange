@@ -1,0 +1,33 @@
+﻿name: Pull Request Triggered Actions
+run-name: ${{ github.event_name }} to [${{ github.base_ref }}] PR# ${{ github.event.pull_request.number }} - ${{ github.run_number }}_${{ github.run_attempt }}
+
+on:
+  - pull_request
+
+jobs:
+  CalculateGitTagAndRetention:
+    uses: ExtremeEventSolutions/ees-flow-parallel/.github/workflows/ees.common.GitVersionAndRetentionFromConfig.yml@main
+    secrets: inherit
+
+  FindChanges:
+    uses: ./.github/workflows/common.find.changes.yml
+    needs: CalculateGitTagAndRetention
+    with:
+      BranchName: ${{ needs.CalculateGitTagAndRetention.outputs.TARGET_BRANCH_PROPER }}
+    secrets: inherit
+
+  Build:
+    needs: [CalculateGitTagAndRetention, FindChanges]
+    uses: ./.github/workflows/common.build.yml
+    secrets: inherit
+    with:
+      SDEChangesFound: ${{ needs.FindChanges.outputs.SDE_CHANGES_FOUND }}
+      gitversion: ${{ needs.CalculateGitTagAndRetention.outputs.GIT_TAG }}
+      daysToRetain: ${{ needs.CalculateGitTagAndRetention.outputs.ARTIFACT_RETENTION_IN_DAYS }}
+
+  PromotePrerelease:
+    needs: [CalculateGitTagAndRetention, Build]
+    secrets: inherit
+    uses: ./.github/workflows/common.promote.prerelease.yml
+    with:
+      prereleasetag: ${{ needs.CalculateGitTagAndRetention.outputs.GIT_TAG }}

@@ -1,0 +1,86 @@
+﻿name: Find changes for release
+
+on:
+  workflow_call:
+    inputs:
+      BranchName:
+        required: true
+        type: string
+    outputs:
+      SDE_CHANGES_FOUND:
+        value: ${{ jobs.FindChanges.outputs.SDE_CHANGES_FOUND }}
+      BASELINE_MANIFEST_FILE_RUN_ID:
+        value: ${{ jobs.FindChanges.outputs.BASELINE_MANIFEST_FILE_RUN_ID }}
+
+jobs:
+  FindChanges:
+    name: FindChanges
+    runs-on: ubuntu-latest
+    outputs:
+      SDE_CHANGES_FOUND: ${{ steps.changedModules.outputs.SDE_CHANGES_FOUND }}
+      BASELINE_MANIFEST_FILE_RUN_ID: ${{ steps.changedModules.outputs.BASELINE_MANIFEST_FILE_RUN_ID }}
+    steps:
+      - name: "Checkout Source"
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: "Checkout Composite Action Repository"
+        uses: actions/checkout@v4
+        with:
+          repository: ExtremeEventSolutions/ees-compositeactions
+          ref: releases/33
+          path: "compositeactions"
+          token: ${{ secrets.EES_COMPOSITEACTIONS_TOKEN }}
+
+      - name: "Lookup Release Manifest for Target Branch"
+        id: look-ReleaseManifest
+        uses: "./compositeactions/artifact-search"
+        with:
+          repository: "ees-ap-sde"
+          workflow_and_artifact_names: '{"events.merge-group.yml":"EES-AP-SDE-manifest"}'
+          target_branch: ${{ inputs.BranchName }}
+          artifact_key: "EES-AP-SDE-manifest"
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Print Manifest Search Results"
+        run: |
+          Write-Host "The build number of the manifest is: ${{ steps.look-ReleaseManifest.outputs.single_result }}"
+          if("Not found" -eq "${{ steps.look-ReleaseManifest.outputs.single_result }}")
+          {
+            Write-Host "Unable to find previous release manifest targetting the same branch as the current context."
+          }
+        shell: pwsh
+
+      - name: "Calculate based on filtered paths"
+        id: "calculate_filter_paths"
+        uses: dorny/paths-filter@v2
+        with:
+          base: ${{ github.base_ref || github.event.merge_group.base_ref }}
+          filters: |
+            SDE_CHANGES_FOUND:
+              - 'cdk/**'
+              - 'src/**'
+              - 'docker/**'
+              - 'infra/**'
+              - 'scripts/**'
+
+      - name: "Prepare Final Change Output Mappings"
+        id: changedModules
+        run: |
+          if("Not found" -eq "${{ steps.look-ReleaseManifest.outputs.single_result }}")
+          {
+            # No manifest file was found, build *everything*
+            Write-Output "SDE_CHANGES_FOUND=true" >> $Env:GITHUB_OUTPUT
+            # Set baseline manifest to THIS run_id
+            Write-Output "BASELINE_MANIFEST_FILE_RUN_ID=${{ github.run_id }}" >> $Env:GITHUB_OUTPUT
+          }
+          else
+          {
+            # Manifest was found and as such change detection via PR changes should have occurred
+            Write-Output "SDE_CHANGES_FOUND=${{ steps.calculate_filter_paths.outputs.SDE_CHANGES_FOUND }}" >> $Env:GITHUB_OUTPUT
+            # Set baseline manifest to the searched run_id
+            Write-Output "BASELINE_MANIFEST_FILE_RUN_ID=${{ steps.look-ReleaseManifest.outputs.single_result }}" >> $Env:GITHUB_OUTPUT
+          }
+        shell: pwsh

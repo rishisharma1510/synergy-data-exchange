@@ -1,0 +1,42 @@
+﻿name: Manual Deploy Synergy Data Exchange
+
+on:
+  workflow_dispatch:
+    inputs:
+      releaseTag:
+        description: "Release tag to deploy"
+        required: true
+        type: string
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+        default: 'dev'
+      sql_edition:
+        description: "SQL Server edition for PATH 2 (Fargate Standard) and PATH 3 (Batch). Use Developer for non-prod to eliminate SPLA cost. NEVER use Developer on prod."
+        required: false
+        type: choice
+        options:
+          - Developer
+          - Standard
+        default: 'Developer'
+
+jobs:
+  Get-EnvVariables:
+    uses: ./.github/workflows/common.getRequiredVariables.yml
+    with:
+      environment: ${{ inputs.environment }}
+    secrets: inherit
+
+  Deploy:
+    needs: Get-EnvVariables
+    uses: ./.github/workflows/common.deploy.yml
+    with:
+      releaseTag: ${{ inputs.releaseTag }}
+      environment: ${{ inputs.environment }}
+      sql_edition: ${{ inputs.sql_edition }}
+    secrets: inherit

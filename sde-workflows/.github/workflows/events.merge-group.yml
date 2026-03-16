@@ -1,0 +1,66 @@
+﻿name: Merge Group Triggered Actions
+run-name: ${{ github.event_name }} to [${{ github.event.merge_group.base_ref }}] - ${{ github.run_number }}_${{ github.run_attempt }}
+
+on:
+  merge_group:
+    branches: [main, release/integration]
+
+jobs:
+  CalculateGitTagAndRetention:
+    uses: ExtremeEventSolutions/ees-flow-parallel/.github/workflows/ees.vss.versioning.release.yml@main
+    secrets: inherit
+
+  OutputTargetEnvironment:
+    uses: ExtremeEventSolutions/ees-flow-parallel/.github/workflows/ees.vss.branch.environment.mapping.yml@main
+    secrets: inherit
+
+  FindChanges:
+    uses: ./.github/workflows/common.find.changes.yml
+    needs: CalculateGitTagAndRetention
+    with:
+      BranchName: ${{ needs.CalculateGitTagAndRetention.outputs.TARGET_BRANCH_PROPER }}
+    secrets: inherit
+
+  Build:
+    needs: [CalculateGitTagAndRetention, FindChanges]
+    uses: ./.github/workflows/common.build.yml
+    secrets: inherit
+    with:
+      SDEChangesFound: ${{ needs.FindChanges.outputs.SDE_CHANGES_FOUND }}
+      gitversion: ${{ needs.CalculateGitTagAndRetention.outputs.GIT_TAG }}
+      daysToRetain: ${{ needs.CalculateGitTagAndRetention.outputs.ARTIFACT_RETENTION_IN_DAYS }}
+
+  ReleaseGeneration:
+    needs: [CalculateGitTagAndRetention, FindChanges, Build]
+    uses: ./.github/workflows/common.release.generate.yml
+    secrets: inherit
+    with:
+      SDEChangesFound: ${{ needs.FindChanges.outputs.SDE_CHANGES_FOUND }}
+      BaselineReleaseManifestRunId: ${{ needs.FindChanges.outputs.BASELINE_MANIFEST_FILE_RUN_ID }}
+      GitTag: ${{ needs.CalculateGitTagAndRetention.outputs.GIT_TAG }}
+      Prerelease: true
+
+  Get-EnvVariables:
+    uses: ./.github/workflows/common.getRequiredVariables.yml
+    secrets: inherit
+    needs: OutputTargetEnvironment
+    with:
+      environment: ${{ needs.OutputTargetEnvironment.outputs.TARGETENVIRONMENT }}
+
+  Deploy:
+    needs: [CalculateGitTagAndRetention, FindChanges, Build, ReleaseGeneration, OutputTargetEnvironment, Get-EnvVariables]
+    uses: ./.github/workflows/common.deploy.yml
+    with:
+      environment: ${{ needs.OutputTargetEnvironment.outputs.TARGETENVIRONMENT }}
+      releaseTag: ${{ needs.CalculateGitTagAndRetention.outputs.GIT_TAG }}
+      awsAccountId: ${{ needs.Get-EnvVariables.outputs.AWS_ACCOUNT_ID }}
+      awsRegion: ${{ needs.Get-EnvVariables.outputs.AWS_REGION }}
+      vpcId: ${{ needs.Get-EnvVariables.outputs.VPC_ID }}
+    secrets: inherit
+
+  PromotePrerelease:
+    needs: [CalculateGitTagAndRetention, ReleaseGeneration, Deploy]
+    secrets: inherit
+    uses: ./.github/workflows/common.promote.prerelease.yml
+    with:
+      prereleasetag: ${{ needs.CalculateGitTagAndRetention.outputs.GIT_TAG }}

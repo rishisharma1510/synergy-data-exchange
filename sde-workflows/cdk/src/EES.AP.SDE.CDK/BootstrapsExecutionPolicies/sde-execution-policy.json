@@ -1,0 +1,24 @@
+﻿{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ecr:*",
+                "ecs:*",
+                "ec2:*",
+                "iam:*",
+                "logs:*",
+                "s3:*",
+                "batch:*",
+                "states:*",
+                "lambda:*",
+                "secretsmanager:GetSecretValue",
+                "glue:*",
+                "cloudformation:*",
+                "ssm:*"
+            ],
+            "Resource": "*"
+        }
+    ]
+}

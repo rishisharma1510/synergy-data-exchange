@@ -1,0 +1,90 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 25% 10%;
+    --foreground: 210 20% 92%;
+
+    --card: 220 22% 14%;
+    --card-foreground: 210 20% 92%;
+
+    --popover: 220 22% 14%;
+    --popover-foreground: 210 20% 92%;
+
+    --primary: 174 62% 47%;
+    --primary-foreground: 220 25% 10%;
+
+    --secondary: 220 18% 20%;
+    --secondary-foreground: 210 20% 85%;
+
+    --muted: 220 18% 18%;
+    --muted-foreground: 215 15% 55%;
+
+    --accent: 174 62% 47%;
+    --accent-foreground: 220 25% 10%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 18% 22%;
+    --input: 220 18% 22%;
+    --ring: 174 62% 47%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 220 25% 8%;
+    --sidebar-foreground: 210 20% 75%;
+    --sidebar-primary: 174 62% 47%;
+    --sidebar-primary-foreground: 220 25% 10%;
+    --sidebar-accent: 220 18% 15%;
+    --sidebar-accent-foreground: 210 20% 92%;
+    --sidebar-border: 220 18% 18%;
+    --sidebar-ring: 174 62% 47%;
+
+    --success: 152 60% 45%;
+    --success-foreground: 220 25% 10%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 220 25% 10%;
+    --info: 210 80% 55%;
+    --info-foreground: 210 40% 98%;
+
+    --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-sans);
+    @apply font-semibold tracking-tight;
+  }
+
+  code, pre {
+    font-family: var(--font-mono);
+  }
+}
+
+@layer utilities {
+  .glow-primary {
+    box-shadow: 0 0 20px -5px hsl(var(--primary) / 0.3);
+  }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(200%); }
+  100% { transform: translateX(-100%); }
+}

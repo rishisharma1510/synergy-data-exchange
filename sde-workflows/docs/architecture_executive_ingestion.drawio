@@ -1,0 +1,212 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64)" version="28.1.2">
+  <diagram id="ingestion-executive-three-path" name="Ingestion Executive View">
+    <mxGraphModel dx="1400" dy="900" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="2400" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Title -->
+        <mxCell id="title" value="INGESTION Pipeline - Executive Summary&lt;br&gt;Three-Path Cost-Optimized Architecture" style="text;html=1;fontSize=28;fontStyle=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;" parent="1" vertex="1">
+          <mxGeometry x="400" y="30" width="600" height="80" as="geometry" />
+        </mxCell>
+        
+        <!-- Subtitle -->
+        <mxCell id="subtitle" value="S3 .bak → SQL Server → SID Transform → Iceberg Data Lake" style="text;html=1;fontSize=16;fontStyle=2;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="420" y="115" width="560" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- Source -->
+        <mxCell id="source" value="S3 .bak&lt;br&gt;Artifacts" style="ellipse;whiteSpace=wrap;html=1;fontSize=16;fontStyle=1;fillColor=#ffe6cc;strokeColor=#d79b00;strokeWidth=3;" parent="1" vertex="1">
+          <mxGeometry x="80" y="300" width="140" height="100" as="geometry" />
+        </mxCell>
+        
+        <!-- Step Functions Router -->
+        <mxCell id="router" value="Step Functions&lt;br&gt;&lt;b&gt;SIZE ROUTER&lt;/b&gt;" style="rhombus;whiteSpace=wrap;html=1;fontSize=14;fontStyle=0;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=3;" parent="1" vertex="1">
+          <mxGeometry x="300" y="275" width="150" height="150" as="geometry" />
+        </mxCell>
+        
+        <!-- PATH 1 -->
+        <mxCell id="path1" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#248814;strokeWidth=4;" parent="1" vertex="1">
+          <mxGeometry x="520" y="170" width="340" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="path1Title" value="PATH 1: Fargate + SQL Express" style="text;html=1;fontSize=14;fontStyle=1;fillColor=#248814;strokeColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontColor=#ffffff;rounded=1;" parent="1" vertex="1">
+          <mxGeometry x="550" y="180" width="280" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="path1Size" value="≤ 7 GB | FREE SQL License" style="text;html=1;fontSize=12;fontStyle=1;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontColor=#248814;" parent="1" vertex="1">
+          <mxGeometry x="550" y="210" width="280" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="path1Specs" value="4 vCPU | 8 GB RAM | 200 GB Ephemeral" style="text;html=1;fontSize=11;fontStyle=0;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="550" y="235" width="280" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="path1Cost" value="~$0.55 - $0.65 / run" style="text;html=1;fontSize=13;fontStyle=1;fillColor=#d5e8d4;strokeColor=#248814;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;" parent="1" vertex="1">
+          <mxGeometry x="590" y="260" width="200" height="25" as="geometry" />
+        </mxCell>
+        
+        <!-- PATH 2 -->
+        <mxCell id="path2" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6f2ff;strokeColor=#0066CC;strokeWidth=4;" parent="1" vertex="1">
+          <mxGeometry x="520" y="320" width="340" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="path2Title" value="PATH 2: Fargate + SQL Standard" style="text;html=1;fontSize=14;fontStyle=1;fillColor=#0066CC;strokeColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontColor=#ffffff;rounded=1;" parent="1" vertex="1">
+          <mxGeometry x="550" y="330" width="280" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="path2Size" value="7 - 60 GB | Licensed SQL" style="text;html=1;fontSize=12;fontStyle=1;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontColor=#0066CC;" parent="1" vertex="1">
+          <mxGeometry x="550" y="360" width="280" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="path2Specs" value="8 vCPU | 16 GB RAM | 200 GB Ephemeral" style="text;html=1;fontSize=11;fontStyle=0;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="550" y="385" width="280" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="path2Cost" value="~$0.90 - $1.20 / run" style="text;html=1;fontSize=13;fontStyle=1;fillColor=#cce0ff;strokeColor=#0066CC;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;" parent="1" vertex="1">
+          <mxGeometry x="590" y="410" width="200" height="25" as="geometry" />
+        </mxCell>
+        
+        <!-- PATH 3 -->
+        <mxCell id="path3" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff5e6;strokeColor=#FF8C00;strokeWidth=4;" parent="1" vertex="1">
+          <mxGeometry x="520" y="470" width="340" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="path3Title" value="PATH 3: Batch EC2 + SQL Standard" style="text;html=1;fontSize=14;fontStyle=1;fillColor=#FF8C00;strokeColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontColor=#ffffff;rounded=1;" parent="1" vertex="1">
+          <mxGeometry x="550" y="480" width="280" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="path3Size" value="&gt; 60 GB | NO SIZE LIMIT" style="text;html=1;fontSize=12;fontStyle=1;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontColor=#FF8C00;" parent="1" vertex="1">
+          <mxGeometry x="550" y="510" width="280" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="path3Specs" value="16+ vCPU | 64+ GB RAM | 500+ GB EBS" style="text;html=1;fontSize=11;fontStyle=0;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="550" y="535" width="280" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="path3Cost" value="~$1.50 - $2.50 / run" style="text;html=1;fontSize=13;fontStyle=1;fillColor=#FFE6CC;strokeColor=#FF8C00;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;" parent="1" vertex="1">
+          <mxGeometry x="590" y="560" width="200" height="25" as="geometry" />
+        </mxCell>
+        
+        <!-- Output -->
+        <mxCell id="output" value="ICEBERG&lt;br&gt;Data Lake" style="ellipse;whiteSpace=wrap;html=1;fontSize=16;fontStyle=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=3;" parent="1" vertex="1">
+          <mxGeometry x="1020" y="300" width="140" height="100" as="geometry" />
+        </mxCell>
+        
+        <!-- SID Transform Box -->
+        <mxCell id="sidBox" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6D0DE;strokeColor=#9673a6;strokeWidth=3;" parent="1" vertex="1">
+          <mxGeometry x="890" y="240" width="100" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="sidTitle" value="SID&lt;br&gt;Transform" style="text;html=1;fontSize=12;fontStyle=1;fillColor=#9673a6;strokeColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontColor=#ffffff;rounded=1;" parent="1" vertex="1">
+          <mxGeometry x="895" y="250" width="90" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="sidMod1" value="SIDTransformer" style="text;html=1;fontSize=10;fontStyle=0;fillColor=none;align=center;verticalAlign=middle;" parent="1" vertex="1">
+          <mxGeometry x="895" y="300" width="90" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="sidMod2" value="SIDClient" style="text;html=1;fontSize=10;fontStyle=0;fillColor=none;align=center;verticalAlign=middle;" parent="1" vertex="1">
+          <mxGeometry x="895" y="325" width="90" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="sidMod3" value="ExposureClient" style="text;html=1;fontSize=10;fontStyle=0;fillColor=none;align=center;verticalAlign=middle;" parent="1" vertex="1">
+          <mxGeometry x="895" y="350" width="90" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="sidMod4" value="PK/FK Remap" style="text;html=1;fontSize=10;fontStyle=2;fillColor=none;align=center;verticalAlign=middle;" parent="1" vertex="1">
+          <mxGeometry x="895" y="380" width="90" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="sidMod5" value="Checkpointing" style="text;html=1;fontSize=10;fontStyle=2;fillColor=none;align=center;verticalAlign=middle;" parent="1" vertex="1">
+          <mxGeometry x="895" y="405" width="90" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="sidMod6" value="Audit Trail" style="text;html=1;fontSize=10;fontStyle=2;fillColor=none;align=center;verticalAlign=middle;" parent="1" vertex="1">
+          <mxGeometry x="895" y="430" width="90" height="20" as="geometry" />
+        </mxCell>
+        
+        <!-- Arrows -->
+        <mxCell id="ar1" value="" style="html=1;strokeColor=#d79b00;strokeWidth=3;endArrow=block;endFill=1;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="220" y="350" as="sourcePoint" />
+            <mxPoint x="300" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ar2" value="≤7GB" style="html=1;strokeColor=#248814;strokeWidth=4;endArrow=block;endFill=1;fontStyle=1;fontSize=12;fontColor=#248814;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="450" y="310" as="sourcePoint" />
+            <mxPoint x="520" y="240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ar3" value="7-60GB" style="html=1;strokeColor=#0066CC;strokeWidth=4;endArrow=block;endFill=1;fontStyle=1;fontSize=12;fontColor=#0066CC;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="450" y="350" as="sourcePoint" />
+            <mxPoint x="520" y="385" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ar4" value="&gt;60GB" style="html=1;strokeColor=#FF8C00;strokeWidth=4;endArrow=block;endFill=1;fontStyle=1;fontSize=12;fontColor=#FF8C00;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="450" y="390" as="sourcePoint" />
+            <mxPoint x="520" y="535" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ar5" value="" style="html=1;strokeColor=#248814;strokeWidth=3;endArrow=block;endFill=1;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="860" y="235" as="sourcePoint" />
+            <mxPoint x="890" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ar6" value="" style="html=1;strokeColor=#0066CC;strokeWidth=3;endArrow=block;endFill=1;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="860" y="385" as="sourcePoint" />
+            <mxPoint x="890" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ar7" value="" style="html=1;strokeColor=#FF8C00;strokeWidth=3;endArrow=block;endFill=1;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="860" y="535" as="sourcePoint" />
+            <mxPoint x="890" y="420" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ar8" value="" style="html=1;strokeColor=#9673a6;strokeWidth=3;endArrow=block;endFill=1;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="990" y="350" as="sourcePoint" />
+            <mxPoint x="1020" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Key Benefits Box -->
+        <mxCell id="benefits" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#666666;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="100" y="640" width="450" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="benTitle" value="KEY BENEFITS" style="text;html=1;fontSize=16;fontStyle=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=middle;rounded=1;" parent="1" vertex="1">
+          <mxGeometry x="200" y="650" width="250" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ben1" value="✓ Cost-optimized: FREE license for small datasets" style="text;html=1;fontSize=12;fontStyle=0;fillColor=none;align=left;verticalAlign=middle;" parent="1" vertex="1">
+          <mxGeometry x="115" y="690" width="400" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="ben2" value="✓ Scalable: Fargate for medium, EC2 for large datasets" style="text;html=1;fontSize=12;fontStyle=0;fillColor=none;align=left;verticalAlign=middle;" parent="1" vertex="1">
+          <mxGeometry x="115" y="720" width="400" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="ben3" value="✓ Same Python code for ALL 3 paths" style="text;html=1;fontSize=12;fontStyle=0;fillColor=none;align=left;verticalAlign=middle;" parent="1" vertex="1">
+          <mxGeometry x="115" y="750" width="400" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="ben4" value="✓ Automatic routing via Step Functions" style="text;html=1;fontSize=12;fontStyle=0;fillColor=none;align=left;verticalAlign=middle;" parent="1" vertex="1">
+          <mxGeometry x="115" y="780" width="400" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="ben5" value="✓ SID Transformation: PK/FK remapping via SIDClient" style="text;html=1;fontSize=12;fontStyle=0;fillColor=#E6D0DE;strokeColor=#9673a6;align=left;verticalAlign=middle;rounded=1;" parent="1" vertex="1">
+          <mxGeometry x="115" y="810" width="400" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="ben6" value="✓ TenantContext Lambda: per-tenant config | 50-min cache" style="text;html=1;fontSize=12;fontStyle=0;fillColor=#ffe6cc;strokeColor=#F58534;align=left;verticalAlign=middle;rounded=1;" parent="1" vertex="1">
+          <mxGeometry x="115" y="840" width="400" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="ben7" value="✓ Progress: S3 progress.json + HTTP callbackUrl" style="text;html=1;fontSize=12;fontStyle=0;fillColor=#d5e8d4;strokeColor=#82b366;align=left;verticalAlign=middle;rounded=1;" parent="1" vertex="1">
+          <mxGeometry x="115" y="870" width="400" height="25" as="geometry" />
+        </mxCell>
+        
+        <!-- Cost Comparison Box -->
+        <mxCell id="costBox" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f9f9f9;strokeColor=#666666;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="600" y="640" width="480" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="costTitle" value="COST ANALYSIS (Per Ingestion)" style="text;html=1;fontSize=16;fontStyle=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=middle;rounded=1;" parent="1" vertex="1">
+          <mxGeometry x="700" y="650" width="280" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="cost1" value="&lt;font color='#248814'&gt;■&lt;/font&gt; Small (≤7GB):    &lt;b&gt;$0.55-0.65&lt;/b&gt; (Express FREE)" style="text;html=1;fontSize=12;fontStyle=0;fillColor=none;align=left;verticalAlign=middle;" parent="1" vertex="1">
+          <mxGeometry x="620" y="695" width="430" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="cost2" value="&lt;font color='#0066CC'&gt;■&lt;/font&gt; Medium (7-60GB): &lt;b&gt;$0.90-1.20&lt;/b&gt; (Fargate + Licensed)" style="text;html=1;fontSize=12;fontStyle=0;fillColor=none;align=left;verticalAlign=middle;" parent="1" vertex="1">
+          <mxGeometry x="620" y="725" width="430" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="cost3" value="&lt;font color='#FF8C00'&gt;■&lt;/font&gt; Large (&gt;60GB):   &lt;b&gt;$1.50-2.50&lt;/b&gt; (EC2 + Licensed)" style="text;html=1;fontSize=12;fontStyle=0;fillColor=none;align=left;verticalAlign=middle;" parent="1" vertex="1">
+          <mxGeometry x="620" y="755" width="430" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="costNote" value="* Includes compute, storage, data transfer" style="text;html=1;fontSize=10;fontStyle=2;fillColor=none;align=center;verticalAlign=middle;" parent="1" vertex="1">
+          <mxGeometry x="700" y="790" width="280" height="20" as="geometry" />
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,9 @@
+﻿aws : 
+At line:1 char:34
++ ...  = "utf-8"; aws stepfunctions describe-state-machine --state-machine- ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+'charmap' codec can't encode character '\u2264' in position 5483: character 
+maps to <undefined>

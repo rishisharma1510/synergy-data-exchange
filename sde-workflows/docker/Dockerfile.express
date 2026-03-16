@@ -1,0 +1,80 @@
+# =============================================================================
+# PATH 1: SQL Server Express + Python Pipeline (≤7GB datasets)
+# =============================================================================
+# FREE SQL Server edition - no license cost
+# Limitations: 10GB max database size, 1GB RAM for SQL, 4 cores
+# Use case: Majority of extractions/ingestions (≤7GB)
+# Target: ECS Fargate (8 vCPU, 60GB RAM)
+# =============================================================================
+
+FROM mcr.microsoft.com/mssql/server:2022-latest
+
+# Switch to root for package installation
+USER root
+
+# Install Python 3.12 and required dependencies
+# Bypass add-apt-repository (uses launchpadlib/httplib2 which fails behind corporate TLS proxy):
+# manually add the deadsnakes PPA key via HKP port 80 (plain HTTP) and write sources.list directly.
+RUN apt-get update && apt-get install -y \
+    gnupg2 \
+    curl \
+    unixodbc \
+    unixodbc-dev \
+    && apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys F23C5A6CF475977595C89F51BA6932366A755776 \
+    && echo "deb http://ppa.launchpad.net/deadsnakes/ppa/ubuntu jammy main" >> /etc/apt/sources.list \
+    && apt-get update && apt-get install -y \
+    python3.12 \
+    python3.12-venv \
+    python3.12-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/python3.12 /usr/bin/python3 \
+    && python3.12 -m ensurepip --upgrade
+
+# Create application directory
+WORKDIR /app
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN python3.12 -m pip install --no-cache-dir \
+    --trusted-host pypi.org \
+    --trusted-host files.pythonhosted.org \
+    --trusted-host pypi.python.org \
+    -r requirements.txt
+
+# Copy application code
+COPY src/ ./src/
+
+# =============================================================================
+# SQL Server Express Configuration (FREE)
+# =============================================================================
+ENV ACCEPT_EULA=Y
+ENV MSSQL_PID=Express
+ENV MSSQL_COLLATION=SQL_Latin1_General_CP1_CI_AS
+
+# Express edition limitations (enforced by SQL Server):
+# - Max 10GB per database
+# - Max 1GB buffer pool (RAM for data)
+# - Max 4 CPU cores used
+# - No SQL Server Agent
+
+# Path identifier for logging/monitoring
+ENV PIPELINE_PATH=PATH1_EXPRESS
+
+# Create directories for data and backups
+RUN mkdir -p /data/backup /data/mdf && chown -R mssql:root /data
+
+# Volume mount point for MDF files (Fargate ephemeral storage)
+VOLUME ["/data"]
+
+# Expose SQL Server port
+EXPOSE 1433
+
+# Copy and set up entrypoint
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$SA_PASSWORD" -C -Q "SELECT 1" || exit 1
+
+ENTRYPOINT ["/entrypoint.sh"]

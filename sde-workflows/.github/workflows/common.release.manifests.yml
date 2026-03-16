@@ -1,0 +1,143 @@
+﻿name: Create Manifests File
+
+on:
+  workflow_call:
+    inputs:
+      SDEChangesFound:
+        required: true
+        type: string
+      GitTag:
+        required: true
+        type: string
+      ArtifactRetentionInDays:
+        required: true
+        type: string
+      BaselineReleaseManifestRunId:
+        required: true
+        type: string
+    outputs:
+      SDE_CDK_run_id:
+        description: "sde_cdk RunId"
+        value: ${{ jobs.ManifestGeneration.outputs.SDE_CDK_run_id }}
+      sde_python_run_id:
+        description: "sde_python RunId"
+        value: ${{ jobs.ManifestGeneration.outputs.sde_python_run_id }}
+      sde_docker_run_id:
+        description: "sde_docker RunId"
+        value: ${{ jobs.ManifestGeneration.outputs.sde_docker_run_id }}
+      manifest_run_id:
+        description: "Manifest RunId"
+        value: ${{ jobs.ManifestGeneration.outputs.manifest_run_id }}
+
+permissions: write-all
+env:
+  ReleaseManifestsDir: "EES-AP-SDE-manifest"
+  ReleaseManifestsFile: "EES-AP-SDE-manifest/manifests.json"
+
+jobs:
+  ManifestGeneration:
+    if: ${{ github.event_name == 'merge_group' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    outputs:
+      SDE_CDK_run_id: ${{ steps.manifests-env-vars.outputs.SDE_CDK_RunId }}
+      sde_python_run_id: ${{ steps.manifests-env-vars.outputs.sde_python_RunId }}
+      sde_docker_run_id: ${{ steps.manifests-env-vars.outputs.sde_docker_RunId }}
+      manifest_run_id: ${{ steps.manifests-env-vars.outputs.Manifest_RunId }}
+
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Checkout Composite Action Repository
+        uses: actions/checkout@v4
+        with:
+          repository: ExtremeEventSolutions/ees-compositeactions
+          ref: releases/33
+          path: "compositeactions"
+          token: ${{ secrets.EES_COMPOSITEACTIONS_TOKEN }}
+
+      - name: Create Manifests Directory
+        run: mkdir -p ${{ env.ReleaseManifestsDir }}
+        shell: bash
+
+      - name: Download Release Manifest
+        id: download-release-manifest
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workflow_conclusion: ""
+          workflow_search: false
+          run_id: ${{ inputs.BaselineReleaseManifestRunId }}
+          name: "EES-AP-SDE-manifest"
+          path: ${{ env.ReleaseManifestsDir }}
+          if_no_artifact_found: warn
+
+      - name: Initialize Manifests File
+        run: |
+          if [ ! -f ${{ env.ReleaseManifestsFile }} ]; then
+            echo '{"artifacts": []}' > ${{ env.ReleaseManifestsFile }}
+          fi
+        shell: bash
+
+      - name: Update Manifest - sde_cdk
+        if: inputs.SDEChangesFound == 'true'
+        uses: "./compositeactions/update-manifest"
+        with:
+          manifestsFile: ${{ env.ReleaseManifestsFile }}
+          artifactName: "sde_cdk"
+          runId: ${{ github.run_id }}
+
+      - name: Update Manifest - sde_python
+        if: inputs.SDEChangesFound == 'true'
+        uses: "./compositeactions/update-manifest"
+        with:
+          manifestsFile: ${{ env.ReleaseManifestsFile }}
+          artifactName: "sde_python"
+          runId: ${{ github.run_id }}
+
+      - name: Update Manifest - sde_docker
+        if: inputs.SDEChangesFound == 'true'
+        uses: "./compositeactions/update-manifest"
+        with:
+          manifestsFile: ${{ env.ReleaseManifestsFile }}
+          artifactName: "sde_docker"
+          runId: ${{ github.run_id }}
+
+      - name: Display Manifests File
+        run: cat ${{ env.ReleaseManifestsFile }}
+        shell: bash
+
+      - name: Upload Manifests Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: "EES-AP-SDE-manifest"
+          path: ${{ env.ReleaseManifestsDir }}
+          if-no-files-found: error
+          retention-days: ${{ inputs.ArtifactRetentionInDays }}
+
+      - name: Set Manifest Environment Variables
+        id: manifests-env-vars
+        run: |
+          echo "Manifest_RunId=${{ github.run_id }}" >> $GITHUB_OUTPUT
+          
+          # Read manifest file and extract run IDs
+          if [ -f ${{ env.ReleaseManifestsFile }} ]; then
+            SDE_CDK_RunId=$(jq -r '.artifacts[] | select(.name == "sde_cdk") | .runId' ${{ env.ReleaseManifestsFile }})
+            sde_python_RunId=$(jq -r '.artifacts[] | select(.name == "sde_python") | .runId' ${{ env.ReleaseManifestsFile }})
+            sde_docker_RunId=$(jq -r '.artifacts[] | select(.name == "sde_docker") | .runId' ${{ env.ReleaseManifestsFile }})
+            
+            echo "SDE_CDK_RunId=${SDE_CDK_RunId:-${{ github.run_id }}}" >> $GITHUB_OUTPUT
+            echo "sde_python_RunId=${sde_python_RunId:-${{ github.run_id }}}" >> $GITHUB_OUTPUT
+            echo "sde_docker_RunId=${sde_docker_RunId:-${{ github.run_id }}}" >> $GITHUB_OUTPUT
+          else
+            echo "SDE_CDK_RunId=${{ github.run_id }}" >> $GITHUB_OUTPUT
+            echo "sde_python_RunId=${{ github.run_id }}" >> $GITHUB_OUTPUT
+            echo "sde_docker_RunId=${{ github.run_id }}" >> $GITHUB_OUTPUT
+          fi
+        shell: bash

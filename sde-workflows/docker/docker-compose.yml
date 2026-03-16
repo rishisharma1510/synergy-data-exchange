@@ -1,0 +1,111 @@
+# =============================================================================
+# Docker Compose for Local Testing - All Paths
+# =============================================================================
+# Usage:
+#   docker-compose -f docker/docker-compose.yml --profile express up   # PATH 1
+#   docker-compose -f docker/docker-compose.yml --profile standard up  # PATH 2
+#   docker-compose -f docker/docker-compose.yml --profile batch up     # PATH 3
+# =============================================================================
+
+version: '3.8'
+
+x-common-env: &common-env
+  SA_PASSWORD: ${SA_PASSWORD:-YourStrong@Passw0rd}
+  ACCEPT_EULA: Y
+  # AWS credentials (from host environment or .env file)
+  AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+  AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+  AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN}
+  AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-us-east-1}
+  # Pipeline configuration
+  ICEBERG_NAMESPACE: ${ICEBERG_NAMESPACE:-rs_cdkdev_ssautoma03_exposure_db}
+  TARGET_S3_BUCKET: ${TARGET_S3_BUCKET:-rks-sd-virusscan}
+  TARGET_S3_PREFIX: ${TARGET_S3_PREFIX:-extraction-test/}
+
+services:
+  # ===========================================================================
+  # PATH 1: SQL Server Express (≤7GB) - Simulates Fargate
+  # ===========================================================================
+  pipeline-express:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.express
+    profiles:
+      - express
+      - path1
+    environment:
+      <<: *common-env
+      PIPELINE_MODE: ${PIPELINE_MODE:-extraction}
+      MSSQL_PID: Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - express-data:/data
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '2'
+          memory: 4G
+
+  # ===========================================================================
+  # PATH 2: SQL Server Standard (9-80GB) - Simulates Fargate
+  # ===========================================================================
+  pipeline-standard:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.standard
+    profiles:
+      - standard
+      - path2
+    environment:
+      <<: *common-env
+      PIPELINE_MODE: ${PIPELINE_MODE:-extraction}
+      MSSQL_PID: Standard
+    ports:
+      - "1433:1433"
+    volumes:
+      - standard-data:/data
+    deploy:
+      resources:
+        limits:
+          cpus: '8'
+          memory: 16G
+        reservations:
+          cpus: '4'
+          memory: 8G
+
+  # ===========================================================================
+  # PATH 3: SQL Server Standard (>60GB) - Simulates AWS Batch EC2
+  # ===========================================================================
+  pipeline-batch:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.batch
+    profiles:
+      - batch
+      - path3
+    environment:
+      <<: *common-env
+      PIPELINE_MODE: ${PIPELINE_MODE:-extraction}
+      MSSQL_PID: Standard
+      MSSQL_MEMORY_LIMIT_MB: 32768
+    ports:
+      - "1433:1433"
+    volumes:
+      - batch-data:/data
+    deploy:
+      resources:
+        limits:
+          cpus: '16'
+          memory: 64G
+        reservations:
+          cpus: '8'
+          memory: 32G
+
+volumes:
+  express-data:
+  standard-data:
+  batch-data:

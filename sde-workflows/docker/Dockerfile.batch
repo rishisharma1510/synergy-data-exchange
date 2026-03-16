@@ -1,0 +1,98 @@
+# =============================================================================
+# PATH 3: SQL Server Standard + Python Pipeline (>80GB datasets)
+# =============================================================================
+# Licensed SQL Server edition - SPLA licensing applies
+# Optimized for large datasets with high memory and I/O
+# Use case: Large extractions/ingestions (>60GB, up to 16TB)
+# Target: AWS Batch with EC2 (16+ vCPU, 64GB+ RAM, EBS volumes)
+# =============================================================================
+
+FROM mcr.microsoft.com/mssql/server:2022-latest
+
+# Switch to root for package installation
+USER root
+
+# Install Python 3.12 and required dependencies
+# Include additional tools for large data operations
+# Bypass add-apt-repository (uses launchpadlib/httplib2 which fails behind corporate TLS proxy):
+# manually add the deadsnakes PPA key via HKP port 80 (plain HTTP) and write sources.list directly.
+RUN apt-get update && apt-get install -y \
+    gnupg2 \
+    curl \
+    unixodbc \
+    unixodbc-dev \
+    pigz \
+    pv \
+    && apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys F23C5A6CF475977595C89F51BA6932366A755776 \
+    && echo "deb http://ppa.launchpad.net/deadsnakes/ppa/ubuntu jammy main" >> /etc/apt/sources.list \
+    && apt-get update && apt-get install -y \
+    python3.12 \
+    python3.12-venv \
+    python3.12-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/python3.12 /usr/bin/python3 \
+    && python3.12 -m ensurepip --upgrade
+
+# Create application directory
+WORKDIR /app
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN python3.12 -m pip install --no-cache-dir \
+    --trusted-host pypi.org \
+    --trusted-host files.pythonhosted.org \
+    --trusted-host pypi.python.org \
+    -r requirements.txt
+
+# Copy application code
+COPY src/ ./src/
+
+# =============================================================================
+# SQL Server Standard Configuration (Licensed) - Optimized for Large Data
+# =============================================================================
+ENV ACCEPT_EULA=Y
+ENV MSSQL_PID=Standard
+ENV MSSQL_COLLATION=SQL_Latin1_General_CP1_CI_AS
+
+# Memory configuration for large datasets
+# These will be overridden at runtime based on EC2 instance size
+ENV MSSQL_MEMORY_LIMIT_MB=32768
+
+# Enable backup compression (critical for large datasets)
+ENV MSSQL_BACKUP_COMPRESSION=1
+
+# Enable instant file initialization for faster MDF creation
+# Requires appropriate permissions in container
+ENV MSSQL_IFI_ENABLED=1
+
+# Path identifier for logging/monitoring
+ENV PIPELINE_PATH=PATH3_BATCH
+
+# Parallelism settings for large data operations
+ENV MSSQL_MAX_DEGREE_OF_PARALLELISM=0
+
+# Create directories for data and backups
+# AWS Batch will mount EBS volume to /data
+RUN mkdir -p /data/backup /data/mdf /data/tempdb && chown -R mssql:root /data
+
+# Configure tempdb for large operations (will use EBS)
+ENV MSSQL_DATA_DIR=/data/mdf
+ENV MSSQL_LOG_DIR=/data/mdf
+ENV MSSQL_BACKUP_DIR=/data/backup
+
+# Volume mount point for EBS (AWS Batch mounts here)
+VOLUME ["/data"]
+
+# Expose SQL Server port
+EXPOSE 1433
+
+# Copy and set up entrypoint (batch-specific with memory tuning)
+COPY docker/entrypoint.sh /entrypoint.sh
+COPY docker/batch_init.sql /batch_init.sql
+RUN chmod +x /entrypoint.sh
+
+# Health check with longer timeout for large data operations
+HEALTHCHECK --interval=60s --timeout=30s --start-period=120s --retries=5 \
+    CMD /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$SA_PASSWORD" -C -Q "SELECT 1" || exit 1
+
+ENTRYPOINT ["/entrypoint.sh"]

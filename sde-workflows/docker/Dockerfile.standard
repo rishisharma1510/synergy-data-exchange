@@ -1,0 +1,84 @@
+# =============================================================================
+# PATH 2: SQL Server Standard + Python Pipeline (9-80GB datasets)
+# =============================================================================
+# Licensed SQL Server edition - SPLA licensing applies
+# No database size limit, full SQL Server features
+# Use case: Medium to large extractions/ingestions (7-60GB)
+# Target: ECS Fargate (16 vCPU, 120GB RAM)
+# =============================================================================
+
+FROM mcr.microsoft.com/mssql/server:2022-latest
+
+# Switch to root for package installation
+USER root
+
+# Install Python 3.12 and required dependencies
+# Bypass add-apt-repository (uses launchpadlib/httplib2 which fails behind corporate TLS proxy):
+# manually add the deadsnakes PPA key via HKP port 80 (plain HTTP) and write sources.list directly.
+RUN apt-get update && apt-get install -y \
+    gnupg2 \
+    curl \
+    unixodbc \
+    unixodbc-dev \
+    && apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys F23C5A6CF475977595C89F51BA6932366A755776 \
+    && echo "deb http://ppa.launchpad.net/deadsnakes/ppa/ubuntu jammy main" >> /etc/apt/sources.list \
+    && apt-get update && apt-get install -y \
+    python3.12 \
+    python3.12-venv \
+    python3.12-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/python3.12 /usr/bin/python3 \
+    && python3.12 -m ensurepip --upgrade
+
+# Create application directory
+WORKDIR /app
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN python3.12 -m pip install --no-cache-dir \
+    --trusted-host pypi.org \
+    --trusted-host files.pythonhosted.org \
+    --trusted-host pypi.python.org \
+    -r requirements.txt
+
+# Copy application code
+COPY src/ ./src/
+
+# =============================================================================
+# SQL Server Standard Configuration (Licensed)
+# =============================================================================
+ENV ACCEPT_EULA=Y
+ENV MSSQL_PID=Standard
+ENV MSSQL_COLLATION=SQL_Latin1_General_CP1_CI_AS
+
+# Standard edition capabilities:
+# - Unlimited database size
+# - Up to 128GB RAM for buffer pool
+# - Up to 24 cores
+# - Full backup compression
+# - SQL Server Agent available
+
+# Enable backup compression for faster MDF creation
+ENV MSSQL_BACKUP_COMPRESSION=1
+
+# Path identifier for logging/monitoring
+ENV PIPELINE_PATH=PATH2_STANDARD
+
+# Create directories for data and backups
+RUN mkdir -p /data/backup /data/mdf && chown -R mssql:root /data
+
+# Volume mount point for MDF files (Fargate ephemeral storage)
+VOLUME ["/data"]
+
+# Expose SQL Server port
+EXPOSE 1433
+
+# Copy and set up entrypoint
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$SA_PASSWORD" -C -Q "SELECT 1" || exit 1
+
+ENTRYPOINT ["/entrypoint.sh"]

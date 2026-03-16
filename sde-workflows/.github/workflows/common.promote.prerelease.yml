@@ -1,0 +1,29 @@
+﻿name: Update Prerelease to Release
+
+on:
+  workflow_call:
+    inputs:
+      prereleasetag:
+        description: "The tag of the prerelease to source artifacts"
+        required: true
+        type: string
+
+jobs:
+  PromotePrerelease:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'merge_group' }}
+    steps:
+      - name: "Checkout Composite Action Repository"
+        uses: actions/checkout@v4
+        with:
+          repository: ExtremeEventSolutions/ees-compositeactions
+          ref: releases/35
+          path: "compositeactions"
+          token: ${{ secrets.EES_COMPOSITEACTIONS_TOKEN }}
+
+      - name: "Promote Prerelease to Non-Prerelease"
+        uses: "./compositeactions/promote-prerelease"
+        with:
+          releaseId: "${{ inputs.prereleasetag }}"
+          token: "${{ secrets.GITHUB_TOKEN }}"
+          repo: "ees-ap-sde"
