@@ -8,6 +8,7 @@ import subprocess
 import sys
 
 REGION = "us-east-1"
+STAGE = "dev"
 FAMILY = sys.argv[1] if len(sys.argv) > 1 else "ss-cdkdev-sde-express"
 
 READ_ONLY_FIELDS = [
@@ -15,26 +16,109 @@ READ_ONLY_FIELDS = [
     "placementConstraints", "compatibilities", "registeredAt", "registeredBy",
 ]
 
-ADOT_SIDECAR = {
-    "name": "adot-sidecar",
-    "image": "public.ecr.aws/aws-observability/aws-otel-collector:latest",
-    "essential": False,
-    "cpu": 256,
-    "memory": 512,
-    "command": ["--config", "/etc/ecs/ecs-default-config.yaml"],
-    "environment": [
-        {"name": "OTEL_SERVICE_NAME", "value": FAMILY}
-    ],
-    "logConfiguration": {
-        "logDriver": "awslogs",
-        "options": {
-            "awslogs-group": "/ecs/ss-cdkdev-sde/adot",
-            "awslogs-region": REGION,
-            "awslogs-stream-prefix": FAMILY,
-            "awslogs-create-group": "true",
+# Dynatrace ADOT collector config — forwarded to Dynatrace via OTLP.
+# ${DT_ENDPOINT}, ${DT_API_TOKEN}, ${ENVIRONMENT} are substituted by ADOT at startup.
+ADOT_COLLECTOR_CONFIG = """
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 256
+    spike_limit_mib: 64
+  batch:
+    timeout: 5s
+    send_batch_size: 1000
+  resourcedetection:
+    detectors: [env, ecs, ec2]
+    timeout: 5s
+    override: false
+  resource:
+    attributes:
+      - key: deployment.environment
+        value: "${ENVIRONMENT}"
+        action: upsert
+      - key: organization
+        value: "ees"
+        action: upsert
+
+exporters:
+  otlphttp/dynatrace:
+    endpoint: "${DT_ENDPOINT}"
+    traces_endpoint: "${DT_ENDPOINT}/v1/traces"
+    metrics_endpoint: "${DT_ENDPOINT}/v1/metrics"
+    logs_endpoint: "${DT_ENDPOINT}/v1/logs"
+    headers:
+      Authorization: "Api-Token ${DT_API_TOKEN}"
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+    sending_queue:
+      enabled: true
+      num_consumers: 4
+      queue_size: 100
+
+service:
+  telemetry:
+    logs:
+      level: warn
+  pipelines:
+    traces:
+      receivers:  [otlp]
+      processors: [memory_limiter, resourcedetection, resource, batch]
+      exporters:  [otlphttp/dynatrace]
+    metrics:
+      receivers:  [otlp]
+      processors: [memory_limiter, resourcedetection, resource, batch]
+      exporters:  [otlphttp/dynatrace]
+    logs:
+      receivers:  [otlp]
+      processors: [memory_limiter, resourcedetection, resource, batch]
+      exporters:  [otlphttp/dynatrace]
+""".strip()
+
+DT_SECRET_ARN = f"arn:aws:secretsmanager:{REGION}:451952076009:secret:/ees/observability/{STAGE}/dynatrace/api_token-Gl9fex"
+
+def get_dt_endpoint():
+    out = subprocess.check_output(
+        ["aws", "ssm", "get-parameter", "--name", f"/ees/observability/{STAGE}/dynatrace/endpoint",
+         "--region", REGION, "--query", "Parameter.Value", "--output", "text"],
+        text=True
+    ).strip()
+    return out
+
+
+def build_adot_sidecar(dt_endpoint: str) -> dict:
+    return {
+        "name": "adot-sidecar",
+        "image": "public.ecr.aws/aws-observability/aws-otel-collector:latest",
+        "essential": False,
+        "cpu": 64,
+        "memoryReservation": 128,
+        "command": ["--config", "env:AOT_CONFIG_CONTENT"],
+        "environment": [
+            {"name": "AOT_CONFIG_CONTENT", "value": ADOT_COLLECTOR_CONFIG},
+            {"name": "DT_ENDPOINT", "value": dt_endpoint},
+            {"name": "ENVIRONMENT", "value": STAGE},
+        ],
+        "secrets": [
+            {"name": "DT_API_TOKEN", "valueFrom": DT_SECRET_ARN},
+        ],
+        "logConfiguration": {
+            "logDriver": "awslogs",
+            "options": {
+                "awslogs-group": "/ecs/ss-cdkdev-sde/adot",
+                "awslogs-region": REGION,
+                "awslogs-stream-prefix": FAMILY,
+            },
         },
-    },
-}
+    }
 
 
 def run(args, capture=True):
@@ -46,6 +130,10 @@ def run(args, capture=True):
 
 
 def main():
+    dt_endpoint = get_dt_endpoint()
+    print(f"DT endpoint: {dt_endpoint}")
+    adot_sidecar = build_adot_sidecar(dt_endpoint)
+
     print(f"Fetching task definition: {FAMILY}")
     raw = run(["aws", "ecs", "describe-task-definition",
                "--task-definition", FAMILY,
@@ -56,13 +144,13 @@ def main():
     print(f"Current containers: {[c['name'] for c in td['containerDefinitions']]}")
 
     if any(c["name"] == "adot-sidecar" for c in td["containerDefinitions"]):
-        print("adot-sidecar already present. Nothing to do.")
-        return
+        print("adot-sidecar already present — removing old definition to replace it.")
+        td["containerDefinitions"] = [c for c in td["containerDefinitions"] if c["name"] != "adot-sidecar"]
 
     for field in READ_ONLY_FIELDS:
         td.pop(field, None)
 
-    td["containerDefinitions"].append(ADOT_SIDECAR)
+    td["containerDefinitions"].append(adot_sidecar)
 
     tmp_file = f"/tmp/adot-td-{FAMILY}.json"
     with open(tmp_file, "w", encoding="utf-8") as f:
