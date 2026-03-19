@@ -12,6 +12,9 @@ Credential Handling:
                  S3Uploader uses STS AssumeRole with that role ARN.
 """
 
+from ees_ap_otel import init_telemetry
+init_telemetry()
+
 import json
 import logging
 import os

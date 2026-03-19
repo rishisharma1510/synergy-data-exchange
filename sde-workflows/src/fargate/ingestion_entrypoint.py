@@ -16,6 +16,9 @@ This is the reverse of entrypoint.py (extraction) — it receives data FROM
 a tenant's S3 bucket and ingests it INTO our Iceberg data lake.
 """
 
+from ees_ap_otel import init_telemetry
+init_telemetry()
+
 import json
 import logging
 import os

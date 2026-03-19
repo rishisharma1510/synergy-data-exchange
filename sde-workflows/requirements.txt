@@ -1,3 +1,4 @@
+ees-ap-otel[botocore] @ git+https://github.com/rishisharma1510/otel-collector.git#subdirectory=ees-ap-otel
 pyiceberg[s3,glue,hive,rest,pyiceberg-core]>=0.7.0
 pyiceberg-core>=0.7.0  # required for bucket/year/month/day partition transforms
 pyarrow>=14.0.0

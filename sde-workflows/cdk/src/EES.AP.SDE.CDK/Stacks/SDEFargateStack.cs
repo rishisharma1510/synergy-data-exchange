@@ -10,6 +10,7 @@ using EES.AP.SDE.CDK.Models;
 using EES.AWSCDK.Common;
 using EES.AWSCDK.Common.Extensions;
 using Verisk.EES.CDK.Common.Helpers;
+using EES.AWSCDK.Observability;
 
 namespace EES.AP.SDE.CDK.Stacks;
 
@@ -189,7 +190,8 @@ public class SDEFargateStack : Stack
                 ["SID_API_URL"] = apiSettings.SidApiUrl,
                 ["AWS_REGION"] = props.Region ?? "us-east-1",
                 ["SQLSERVER_USERNAME"] = "sa",
-                ["AWS_RESPONSE_CHECKSUM_VALIDATION"] = "when_required"
+                ["AWS_RESPONSE_CHECKSUM_VALIDATION"] = "when_required",
+                ["OTEL_SERVICE_NAME"] = $"sde-express-{stage}"
             },
             Secrets = new Dictionary<string, Secret>
             {
@@ -197,6 +199,8 @@ public class SDEFargateStack : Stack
                 ["SQLSERVER_PASSWORD"] = Secret.FromSecretsManager(saPasswordSecret)
             }
         });
+
+        ExpressTaskDefinition.AddAdotSidecar(ExpressTaskDefinition, stage, executionRole);
 
         // PATH 2: Standard Task Definition (SQL Server Standard - 9-80GB)
         StandardTaskDefinition = new FargateTaskDefinition(this, "StandardTaskDefinition", new FargateTaskDefinitionProps
@@ -238,7 +242,8 @@ public class SDEFargateStack : Stack
                 ["SID_API_URL"] = apiSettings.SidApiUrl,
                 ["AWS_REGION"] = props.Region ?? "us-east-1",
                 ["SQLSERVER_USERNAME"] = "sa",
-                ["AWS_RESPONSE_CHECKSUM_VALIDATION"] = "when_required"
+                ["AWS_RESPONSE_CHECKSUM_VALIDATION"] = "when_required",
+                ["OTEL_SERVICE_NAME"] = $"sde-standard-{stage}"
             },
             Secrets = new Dictionary<string, Secret>
             {
@@ -246,6 +251,8 @@ public class SDEFargateStack : Stack
                 ["SQLSERVER_PASSWORD"] = Secret.FromSecretsManager(saPasswordSecret)
             }
         });
+
+        StandardTaskDefinition.AddAdotSidecar(StandardTaskDefinition, stage, executionRole);
 
         // Outputs
         _ = new CfnOutput(this, "ClusterArn", new CfnOutputProps

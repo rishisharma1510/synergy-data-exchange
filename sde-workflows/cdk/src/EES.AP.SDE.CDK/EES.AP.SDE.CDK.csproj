@@ -10,8 +10,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Amazon.CDK.Lib" Version="2.177.0" />
-    <PackageReference Include="Constructs" Version="10.4.2" />
+    <PackageReference Include="Amazon.CDK.Lib" Version="2.244.0" />
+    <PackageReference Include="EES.AWSCDK.Observability" Version="1.0.0" />
+    <PackageReference Include="Constructs" Version="10.5.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="9.0.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.1" />
