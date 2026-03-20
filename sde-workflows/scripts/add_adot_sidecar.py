@@ -147,9 +147,11 @@ def main():
         print("adot-sidecar already present — removing old definition to replace it.")
         td["containerDefinitions"] = [c for c in td["containerDefinitions"] if c["name"] != "adot-sidecar"]
 
-    # ── Inject DT_API_TOKEN + DT_ENDPOINT into the app container ─────────────
-    # This lets the Python SDK send directly to Dynatrace, bypassing the ADOT
-    # sidecar race condition (sidecar takes ~8s to start, task may finish in ~10s).
+    # ── Inject DT_API_TOKEN + DT_ENDPOINT + OTEL_SERVICE_NAME into the app container ──
+    # DT_API_TOKEN / DT_ENDPOINT: lets the Python SDK send directly to Dynatrace,
+    # bypassing the ADOT sidecar race condition (sidecar takes ~8s to start).
+    # OTEL_SERVICE_NAME: how this service appears in Dynatrace.
+    OTEL_SERVICE_NAME = f"{STAGE}-Synergy-Data-Exchange"
     for container in td["containerDefinitions"]:
         if container.get("essential") is True:
             env_list = container.setdefault("environment", [])
@@ -157,6 +159,15 @@ def main():
             if "DT_ENDPOINT" not in env_names:
                 env_list.append({"name": "DT_ENDPOINT", "value": dt_endpoint})
                 print(f"  Added DT_ENDPOINT to {container['name']}")
+            if "OTEL_SERVICE_NAME" not in env_names:
+                env_list.append({"name": "OTEL_SERVICE_NAME", "value": OTEL_SERVICE_NAME})
+                print(f"  Added OTEL_SERVICE_NAME={OTEL_SERVICE_NAME} to {container['name']}")
+            else:
+                # Update existing value
+                for e in env_list:
+                    if e["name"] == "OTEL_SERVICE_NAME":
+                        e["value"] = OTEL_SERVICE_NAME
+                print(f"  Set OTEL_SERVICE_NAME={OTEL_SERVICE_NAME} on {container['name']}")
             secrets_list = container.setdefault("secrets", [])
             secret_names = {s["name"] for s in secrets_list}
             if "DT_API_TOKEN" not in secret_names:
