@@ -28,8 +28,12 @@ PIP_FLAGS = [
 DRY_RUN = "--dry-run" in sys.argv
 
 # Find the locally-built wheel (avoids needing git inside the container)
-WHEEL_DIR = os.path.join(tempfile.gettempdir(), "otel-wheels")
+WHEEL_DIR = os.path.join(tempfile.gettempdir(), "otel-wheels-v2")
 _wheels = glob.glob(os.path.join(WHEEL_DIR, "ees_ap_otel-*.whl"))
+if not _wheels:
+    # Fall back to original dir
+    WHEEL_DIR = os.path.join(tempfile.gettempdir(), "otel-wheels")
+    _wheels = glob.glob(os.path.join(WHEEL_DIR, "ees_ap_otel-*.whl"))
 if not _wheels:
     print(f"ERROR: No ees_ap_otel wheel found in {WHEEL_DIR}")
     print("Run: pip wheel 'ees-ap-otel @ git+...' --wheel-dir $env:TEMP\\otel-wheels --no-deps")
@@ -77,14 +81,7 @@ def main():
         # Pull latest
         run(["podman", "pull", "--tls-verify=false", image_uri])
 
-        # Check if already installed
-        check_cmd = ["podman", "run", "--rm", "--entrypoint", "python3.12",
-                     image_uri, "-c", "import ees_ap_otel; print('already installed')"]
-        result = subprocess.run(check_cmd, capture_output=True, text=True)
-        if result.returncode == 0:
-            print(f"  ees-ap-otel already installed in {suffix} image, skipping.")
-            continue
-
+        # Always re-install to pick up latest wheel (force upgrade)
         wheel_name = os.path.basename(WHEEL_FILE)
 
         # Create container, copy wheel in, run pip install, commit
@@ -94,7 +91,7 @@ def main():
         # Start container and run pip install
         run(["podman", "start", container_name])
         run(["podman", "exec", container_name, "python3.12", "-m", "pip", "install",
-             "--no-cache-dir"] + PIP_FLAGS + [f"/tmp/{wheel_name}"])
+             "--no-cache-dir", "--force-reinstall"] + PIP_FLAGS + [f"/tmp/{wheel_name}"])
         run(["podman", "stop", container_name])
 
         # Commit as new image

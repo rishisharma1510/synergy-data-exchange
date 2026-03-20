@@ -17,7 +17,7 @@ READ_ONLY_FIELDS = [
 ]
 
 # Dynatrace ADOT collector config — forwarded to Dynatrace via OTLP.
-# ${DT_ENDPOINT}, ${DT_API_TOKEN}, ${ENVIRONMENT} are substituted by ADOT at startup.
+# ${env:DT_ENDPOINT}, ${env:DT_API_TOKEN}, ${env:ENVIRONMENT} are substituted by ADOT at startup.
 ADOT_COLLECTOR_CONFIG = """
 receivers:
   otlp:
@@ -40,7 +40,7 @@ processors:
   resource:
     attributes:
       - key: deployment.environment
-        value: "${ENVIRONMENT}"
+        value: "${env:ENVIRONMENT}"
         action: upsert
       - key: organization
         value: "ees"
@@ -48,12 +48,12 @@ processors:
 
 exporters:
   otlphttp/dynatrace:
-    endpoint: "${DT_ENDPOINT}"
-    traces_endpoint: "${DT_ENDPOINT}/v1/traces"
-    metrics_endpoint: "${DT_ENDPOINT}/v1/metrics"
-    logs_endpoint: "${DT_ENDPOINT}/v1/logs"
+    endpoint: "${env:DT_ENDPOINT}"
+    traces_endpoint: "${env:DT_ENDPOINT}/v1/traces"
+    metrics_endpoint: "${env:DT_ENDPOINT}/v1/metrics"
+    logs_endpoint: "${env:DT_ENDPOINT}/v1/logs"
     headers:
-      Authorization: "Api-Token ${DT_API_TOKEN}"
+      Authorization: "Api-Token ${env:DT_API_TOKEN}"
     retry_on_failure:
       enabled: true
       initial_interval: 5s
@@ -67,7 +67,7 @@ exporters:
 service:
   telemetry:
     logs:
-      level: warn
+      level: info
   pipelines:
     traces:
       receivers:  [otlp]
