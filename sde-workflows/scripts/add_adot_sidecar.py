@@ -147,6 +147,22 @@ def main():
         print("adot-sidecar already present — removing old definition to replace it.")
         td["containerDefinitions"] = [c for c in td["containerDefinitions"] if c["name"] != "adot-sidecar"]
 
+    # ── Inject DT_API_TOKEN + DT_ENDPOINT into the app container ─────────────
+    # This lets the Python SDK send directly to Dynatrace, bypassing the ADOT
+    # sidecar race condition (sidecar takes ~8s to start, task may finish in ~10s).
+    for container in td["containerDefinitions"]:
+        if container.get("essential") is True:
+            env_list = container.setdefault("environment", [])
+            env_names = {e["name"] for e in env_list}
+            if "DT_ENDPOINT" not in env_names:
+                env_list.append({"name": "DT_ENDPOINT", "value": dt_endpoint})
+                print(f"  Added DT_ENDPOINT to {container['name']}")
+            secrets_list = container.setdefault("secrets", [])
+            secret_names = {s["name"] for s in secrets_list}
+            if "DT_API_TOKEN" not in secret_names:
+                secrets_list.append({"name": "DT_API_TOKEN", "valueFrom": DT_SECRET_ARN})
+                print(f"  Added DT_API_TOKEN secret to {container['name']}")
+
     for field in READ_ONLY_FIELDS:
         td.pop(field, None)
 
