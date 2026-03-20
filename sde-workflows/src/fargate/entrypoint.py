@@ -193,13 +193,36 @@ def main() -> None:
     _handler.addFilter(_ctx_filter)          # <-- on handler, covers all modules
     _root_logger = logging.getLogger()
     _root_logger.setLevel(logging.INFO)
+    # Preserve any OTel LoggingHandlers added by init_telemetry() before clearing.
+    # Without this, _root_logger.handlers.clear() would silently discard the OTel
+    # handler and no logs would ever reach Dynatrace.
+    from opentelemetry.sdk._logs import LoggingHandler as _OtelLogHandler
+    _otel_handlers = [h for h in _root_logger.handlers if isinstance(h, _OtelLogHandler)]
     _root_logger.handlers.clear()
     _root_logger.addHandler(_handler)
+    for _h in _otel_handlers:
+        _root_logger.addHandler(_h)
 
     logger.info("Starting Fargate extraction task...")
 
     # 1. Parse input
     input_payload = parse_input()
+
+    # Wrap the entire pipeline in a root OTel span so the service appears in
+    # Dynatrace Distributed Traces / Service view even before botocore spans
+    # propagate up. The span is ended in the finally block below.
+    from opentelemetry import trace as _otel_trace, context as _otel_context
+    _tracer = _otel_trace.get_tracer("sde-express")
+    _root_span = _tracer.start_span(
+        "extraction-pipeline",
+        attributes={
+            "run.id": input_payload.run_id,
+            "tenant.id": input_payload.tenant_id,
+            "artifact.type": input_payload.artifact_type,
+            "activity.id": input_payload.activity_id,
+        },
+    )
+    _root_ctx_token = _otel_context.attach(_otel_trace.set_span_in_context(_root_span))
 
     # Inject full tenant_id + activity_id into every subsequent log record
     _ctx_filter.tenant_id = input_payload.tenant_id
@@ -405,7 +428,11 @@ def main() -> None:
         logger.exception("%s Extraction task FAILED after %.2fs: %s", ctx, elapsed_total, e)
         reporter.report(0, "FAILED", error=str(e))
         reporter.flush()
+        _root_span.set_status(_otel_trace.StatusCode.ERROR, str(e))
         raise
+    finally:
+        _root_span.end()
+        _otel_context.detach(_root_ctx_token)
 
 
 if __name__ == "__main__":

@@ -92,6 +92,12 @@ def main():
         run(["podman", "start", container_name])
         run(["podman", "exec", container_name, "python3.12", "-m", "pip", "install",
              "--no-cache-dir", "--force-reinstall"] + PIP_FLAGS + [f"/tmp/{wheel_name}"])
+        # Install auto-instrumentation extras (not bundled in the wheel itself)
+        run(["podman", "exec", container_name, "python3.12", "-m", "pip", "install",
+             "--no-cache-dir"] + PIP_FLAGS + [
+             "opentelemetry-instrumentation-botocore",
+             "opentelemetry-instrumentation-requests",
+        ])
         run(["podman", "stop", container_name])
 
         # Commit as new image
